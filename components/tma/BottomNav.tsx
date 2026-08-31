@@ -1,42 +1,49 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Home2, Graph, Bag2, ProfileCircle } from "iconsax-react";
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Home2, Graph, Bag2, ProfileCircle } from 'iconsax-react';
+import { useAppStore } from '@/store/useAppStore';
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { getOrdersCount } = useAppStore();
+  const ordersCount = getOrdersCount();
 
   const navItems = [
     {
-      id: "home",
-      label: "መነሻ",
-      href: "/",
+      id: 'home',
+      label: 'መነሻ',
+      href: '/',
       exact: true,
       icon: Home2,
+      badge: 0,
     },
     {
-      id: "kircha",
-      label: "ቅርጫ",
-      href: "/kircha",
+      id: 'kircha',
+      label: 'ቅርጫ',
+      href: '/kircha',
       exact: false,
       icon: Graph,
+      badge: 0,
     },
     {
-      id: "orders",
-      label: "ትዛዝ",
-      href: "/orders",
+      id: 'orders',
+      label: 'ትዛዝ',
+      href: '/orders',
       exact: false,
       icon: Bag2,
+      badge: ordersCount,
     },
     {
-      id: "profile",
-      label: "መገለጫ",
-      href: "/profile",
+      id: 'profile',
+      label: 'መገለጫ',
+      href: '/profile',
       exact: false,
       icon: ProfileCircle,
+      badge: 0,
     },
   ];
 
@@ -54,26 +61,31 @@ export function BottomNav() {
             <Link
               key={item.id}
               href={item.href}
-              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-[6px] py-1 transition-all"
+              className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-[6px] py-1 transition-all"
             >
               <div className="relative flex size-[24px] items-center justify-center">
                 <Icon
                   size={22}
-                  variant={isActive ? "Bold" : "Linear"}
-                  color={isActive ? "#74a156" : "#868685"}
+                  variant={isActive ? 'Bold' : 'Linear'}
+                  color={isActive ? '#74a156' : '#868685'}
                   className={cn(
-                    "transition-transform",
-                    isActive && "scale-105",
+                    'transition-transform',
+                    isActive && 'scale-105'
                   )}
                 />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 bg-[#74a156] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-xs">
+                    {item.badge}
+                  </span>
+                )}
               </div>
 
               <span
                 className={cn(
-                  "whitespace-nowrap text-[12px] leading-[16px] transition-colors",
+                  'whitespace-nowrap text-[12px] leading-[16px] transition-colors',
                   isActive
-                    ? "font-bold text-[#74a156]"
-                    : "font-medium text-[#868685]",
+                    ? 'font-bold text-[#74a156]'
+                    : 'font-medium text-[#868685]'
                 )}
               >
                 {item.label}

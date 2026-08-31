@@ -11,9 +11,12 @@ import {
   Calendar,
   Location,
   ArrowRight2,
+  Gallery,
 } from 'iconsax-react';
 import { formatETB, formatKirchaQuantity } from '@/lib/utils';
 import { calculateKirchaPricing } from '@/lib/kircha';
+import { CattleImageSlider } from '@/components/tma/CattleImageSlider';
+import { PhotoLightbox } from '@/components/tma/PhotoLightbox';
 
 export default function KirchaDetailPage({
   params,
@@ -26,8 +29,10 @@ export default function KirchaDetailPage({
   // Selected quarter units (1 unit = 1/4 Kircha. 4 units = 1 full Kircha)
   const [selectedQuarterUnits, setSelectedQuarterUnits] = useState<number>(4);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
+  const [lightboxInitialIdx, setLightboxInitialIdx] = useState<number>(0);
 
-  // Listing configuration
+  // Listing configuration with multiple cattle photos
   const listingData = useMemo(() => {
     return {
       id: id || 'krc-1',
@@ -38,7 +43,12 @@ export default function KirchaDetailPage({
       weight: '~450KG',
       description:
         'Healthy ox raised in the Ambo highlands. Perfect for holiday Kircha.',
-      image: '/images/borana_ox_detail.png',
+      images: [
+        '/images/borana_ox_detail.png',
+        '/images/figma_banner.png',
+        '/images/arsi_bull.png',
+        '/images/figma_ox.png',
+      ],
       totalSellingPriceETB: 216000,
       totalKirchaQuantity: 12,
       pricePerKirchaETB: 18000,
@@ -82,25 +92,40 @@ export default function KirchaDetailPage({
     setIsSuccessModalOpen(true);
   };
 
+  const handleOpenPhotoViewer = (index: number = 0) => {
+    setLightboxInitialIdx(index);
+    setIsLightboxOpen(true);
+  };
+
   return (
     <div className="bg-[#f2f4f2] min-h-screen pb-[120px] flex flex-col items-center">
-      {/* Hero Media Container (49:1441) */}
-      <div className="relative w-full max-w-[393px] h-[220px] overflow-hidden bg-stone-900 shrink-0">
-        <Image
-          src={listingData.image}
+      {/* Hero Media Container with 5-Second Auto Slider (49:1441) */}
+      <div className="relative w-full max-w-[393px] h-[230px] overflow-hidden bg-stone-900 shrink-0">
+        <CattleImageSlider
+          images={listingData.images}
           alt={listingData.cattleName}
-          fill
-          className="object-cover"
-          priority
+          autoSlideInterval={5000}
+          aspectRatioClass="h-[230px]"
+          showControls={true}
+          onImageClick={handleOpenPhotoViewer}
         />
 
         {/* Circular Floating Back Button (49:1443) */}
         <button
           onClick={() => router.back()}
-          className="absolute left-[18px] top-[18px] bg-white size-[40px] rounded-full flex items-center justify-center shadow-md hover:bg-stone-50 active:scale-95 transition-all z-20"
+          className="absolute left-[18px] top-[18px] bg-white/90 hover:bg-white active:scale-95 transition-all size-[40px] rounded-full flex items-center justify-center shadow-md backdrop-blur-xs z-20"
           aria-label="Back"
         >
           <ArrowLeft2 size={18} color="#111827" variant="Linear" />
+        </button>
+
+        {/* View All Photos Badge Indicator */}
+        <button
+          onClick={() => handleOpenPhotoViewer(0)}
+          className="absolute right-[14px] top-[18px] bg-black/60 hover:bg-black/80 active:scale-95 text-white px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-xs flex items-center gap-1.5 shadow-md z-20"
+        >
+          <Gallery size={14} color="#ffffff" variant="Linear" />
+          <span>{listingData.images.length} photos</span>
         </button>
       </div>
 
@@ -266,6 +291,15 @@ export default function KirchaDetailPage({
           <ArrowRight2 size={18} color="#ffffff" variant="Linear" />
         </button>
       </div>
+
+      {/* Fullscreen Photo Lightbox Modal */}
+      <PhotoLightbox
+        isOpen={isLightboxOpen}
+        images={listingData.images}
+        initialIndex={lightboxInitialIdx}
+        title={`${listingData.titleAmharic} - ${listingData.cattleName}`}
+        onClose={() => setIsLightboxOpen(false)}
+      />
 
       {/* Confirmation Modal for Testing */}
       {isSuccessModalOpen && (

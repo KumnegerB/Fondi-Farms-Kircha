@@ -13,7 +13,8 @@ interface KirchaItem {
   tagNumber: string;
   portionType: string;
   portionAmharic: string;
-  image: string;
+  coverImage: string;
+  images: string[];
   priceETB: number;
   reservedShares: number;
   totalShares: number;
@@ -44,7 +45,12 @@ function KirchaListContent() {
       tagNumber: 'FR10018159',
       portionType: 'full',
       portionAmharic: 'ሙሉ መደብ',
-      image: '/images/arsi_bull.png',
+      coverImage: '/images/arsi_bull.png',
+      images: [
+        '/images/arsi_bull.png',
+        '/images/borana_ox_detail.png',
+        '/images/figma_banner.png',
+      ],
       priceETB: 16500,
       reservedShares: 10,
       totalShares: 12,
@@ -58,7 +64,12 @@ function KirchaListContent() {
       tagNumber: 'FR10018160',
       portionType: 'half',
       portionAmharic: 'ግማሽ መደብ',
-      image: '/images/figma_banner.png',
+      coverImage: '/images/borana_ox_detail.png',
+      images: [
+        '/images/borana_ox_detail.png',
+        '/images/figma_banner.png',
+        '/images/arsi_bull.png',
+      ],
       priceETB: 8250,
       reservedShares: 6,
       totalShares: 12,
@@ -72,7 +83,12 @@ function KirchaListContent() {
       tagNumber: 'FR10018161',
       portionType: 'quarter',
       portionAmharic: 'ሩብ መደብ',
-      image: '/images/figma_ox.png',
+      coverImage: '/images/figma_ox.png',
+      images: [
+        '/images/figma_ox.png',
+        '/images/figma_banner.png',
+        '/images/borana_ox_detail.png',
+      ],
       priceETB: 4125,
       reservedShares: 11,
       totalShares: 12,
@@ -95,7 +111,7 @@ function KirchaListContent() {
       <div className="bg-white w-full flex h-[68px] items-center justify-between px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
         <button
           onClick={() => router.back()}
-          className="bg-[#f2f4f2] hover:bg-[#e6e8e6] active:scale-95 transition-all rounded-full size-[40px] flex items-center justify-center shrink-0"
+          className="bg-[#f2f4f2] hover:bg-[#e6e8e6] active:scale-95 transition-all rounded-full size-[40px] flex items-center justify-center shrink-0 cursor-pointer"
           aria-label="Back"
         >
           <ArrowLeft2 size={20} color="#111827" variant="Linear" />
@@ -114,7 +130,7 @@ function KirchaListContent() {
           <button
             onClick={() => setActiveTab('full')}
             className={cn(
-              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all',
+              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer',
               activeTab === 'full'
                 ? 'bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]'
                 : 'hover:bg-stone-200/50'
@@ -149,7 +165,7 @@ function KirchaListContent() {
           <button
             onClick={() => setActiveTab('half')}
             className={cn(
-              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all',
+              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer',
               activeTab === 'half'
                 ? 'bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]'
                 : 'hover:bg-stone-200/50'
@@ -184,7 +200,7 @@ function KirchaListContent() {
           <button
             onClick={() => setActiveTab('quarter')}
             className={cn(
-              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all',
+              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer',
               activeTab === 'quarter'
                 ? 'bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]'
                 : 'hover:bg-stone-200/50'
@@ -219,23 +235,29 @@ function KirchaListContent() {
         {/* Kircha Cattle Listing Cards (40:245) */}
         <div className="flex flex-col gap-[16px] w-full items-center">
           {filteredListings.map((listing) => (
-            <div
+            <Link
               key={listing.id}
-              className="bg-white border border-[rgba(22,52,34,0.2)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-[366px] overflow-hidden flex flex-col shrink-0 transition-all hover:border-[#74a156]/50"
+              href={`/kircha/${listing.id}`}
+              className="bg-white border border-[rgba(22,52,34,0.2)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-[366px] overflow-hidden flex flex-col shrink-0 transition-all hover:border-[#74a156] hover:shadow-md group block"
             >
               {/* Card Image Area (40:246) */}
-              <div className="h-[150px] w-full relative overflow-hidden bg-stone-100">
+              <div className="h-[150px] w-full relative overflow-hidden bg-stone-900">
                 <Image
-                  src={listing.image}
+                  src={listing.coverImage}
                   alt={listing.cattleName}
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                   priority
                 />
 
+                {/* Multiple Photos Badge */}
+                <div className="absolute right-[10px] bottom-[10px] bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md text-[10px] font-semibold text-white">
+                  {listing.images.length} photos
+                </div>
+
                 {/* 'Almost Full' Alert Badge with Iconsax Flash */}
                 {listing.isAlmostFull && (
-                  <div className="absolute left-[12px] top-[12px] bg-white/90 backdrop-blur-[2px] px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] shadow-xs">
+                  <div className="absolute left-[12px] top-[12px] bg-white/90 backdrop-blur-[2px] px-[8px] py-[4px] rounded-[4px] flex items-center gap-[4px] shadow-xs pointer-events-none z-10">
                     <Flash size={13} color="#d32f2f" variant="Bold" />
                     <span className="text-[#d32f2f] text-[11px] font-bold leading-[12px]">
                       Almost Full
@@ -293,14 +315,12 @@ function KirchaListContent() {
 
                 {/* CTA Button */}
                 <div className="pt-2">
-                  <Link href={`/kircha/${listing.id}`} className="block w-full">
-                    <button className="w-full bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white rounded-[8px] py-[12px] text-[12px] font-medium text-center shadow-xs">
-                      Reserve Unit
-                    </button>
-                  </Link>
+                  <button className="w-full bg-[#74a156] group-hover:bg-[#669049] active:scale-[0.98] transition-all text-white rounded-[8px] py-[12px] text-[12px] font-medium text-center shadow-xs cursor-pointer">
+                    Reserve Unit
+                  </button>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
