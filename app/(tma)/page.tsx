@@ -1,11 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTelegram } from "@/hooks/useTelegram";
 import { useAppStore } from "@/store/useAppStore";
-import { PercentageCircle, TickCircle, Add } from "iconsax-react";
+import {
+  PercentageCircle,
+  TickCircle,
+  Add,
+  ShieldTick,
+  Like1,
+} from "iconsax-react";
+import { cn } from "@/lib/utils";
 
 interface AnimalCategory {
   id: string;
@@ -23,6 +30,17 @@ interface ShopProductItem {
   category: "dairy" | "eggs" | "poultry";
 }
 
+interface BannerSlide {
+  id: string;
+  title: string;
+  badge1Icon: React.ReactNode;
+  badge1Text: string;
+  badge2Icon: React.ReactNode;
+  badge2Text: string;
+  image: string;
+  href: string;
+}
+
 export default function TMAHomePage() {
   const { user } = useTelegram();
   const { cartItems, addToCart, getCartCount } = useAppStore();
@@ -30,6 +48,127 @@ export default function TMAHomePage() {
   const displayName = user
     ? `${user.first_name} ${user.last_name || ""}`.trim()
     : "Mathias A.";
+
+  // Banner Carousel State with Touch / Swipe
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const bannerTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
+
+  const bannerSlides: BannerSlide[] = [
+    {
+      id: "slide-1",
+      title: "ጥራት መለያችን ነው !",
+      badge1Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
+      badge1Text: "ተመጣጣኝ ዋጋ",
+      badge2Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
+      badge2Text: "የተሻለ ጥራት",
+      image: "/images/figma_banner.png",
+      href: "/kircha",
+    },
+    {
+      id: "slide-2",
+      title: "የበዓል ቅርጫ ዝግጅት !",
+      badge1Icon: <ShieldTick size={12} color="#74a156" variant="Bold" />,
+      badge1Text: "100% ጤናማ",
+      badge2Icon: <Like1 size={12} color="#74a156" variant="Bold" />,
+      badge2Text: "ቀጥታ ከእርሻ",
+      image: "/images/borana_ox_detail.png",
+      href: "/kircha",
+    },
+    {
+      id: "slide-3",
+      title: "ትኩስ የወተትና የእንቁላል ምርቶች",
+      badge1Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
+      badge1Text: "በየቀኑ ትኩስ",
+      badge2Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
+      badge2Text: "አምቦ እርሻ",
+      image: "/images/fresh_milk_yogurt.png",
+      href: "/shop",
+    },
+  ];
+
+  // Auto slide every 5 seconds
+  useEffect(() => {
+    bannerTimerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, 3000);
+
+    return () => {
+      if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
+    };
+  }, [bannerSlides.length]);
+
+  const resetBannerTimer = () => {
+    if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
+    bannerTimerRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, 5000);
+  };
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
+    resetBannerTimer();
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide(
+      (prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length,
+    );
+    resetBannerTimer();
+  };
+
+  // Touch Swipe Handlers for Banner
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchEndXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
+      const diffX = touchStartXRef.current - touchEndXRef.current;
+      const swipeThreshold = 35;
+
+      if (diffX > swipeThreshold) {
+        handleNextSlide();
+      } else if (diffX < -swipeThreshold) {
+        handlePrevSlide();
+      }
+    }
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+  };
+
+  // Mouse Drag Handlers for Testing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    touchStartXRef.current = e.clientX;
+    touchEndXRef.current = e.clientX;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (touchStartXRef.current !== null) {
+      touchEndXRef.current = e.clientX;
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
+      const diffX = touchStartXRef.current - touchEndXRef.current;
+      const swipeThreshold = 35;
+
+      if (diffX > swipeThreshold) {
+        handleNextSlide();
+      } else if (diffX < -swipeThreshold) {
+        handlePrevSlide();
+      }
+    }
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+  };
 
   const kirchaCategories: AnimalCategory[] = [
     {
@@ -100,12 +239,15 @@ export default function TMAHomePage() {
   };
 
   return (
-    <div className="bg-[#f2f4f2] min-h-screen pb-[110px] flex flex-col items-center">
-      {/* Top Header (61:2317) */}
-      <header className="bg-white w-full h-[68px] flex items-center justify-between px-[16px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
+    <div className="bg-[#f2f4f2] min-h-screen pb-[140px] flex flex-col items-center">
+      {/* Floating & Sticky Top Header (61:2317) */}
+      <header className="bg-white/95 backdrop-blur-md w-full h-[68px] flex items-center justify-between px-[16px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-40 shadow-xs">
         {/* User Identity on Left (61:2330) */}
-        <Link href="/profile" className="flex items-center gap-[8px]">
-          <div className="size-[34px] rounded-full overflow-hidden bg-stone-100 flex items-center justify-center shrink-0">
+        <Link
+          href="/profile"
+          className="flex items-center gap-[8px] cursor-pointer"
+        >
+          <div className="size-[34px] rounded-full overflow-hidden bg-stone-100 flex items-center justify-center shrink-0 border border-stone-200">
             <Image
               src="/images/user_avatar_header.svg"
               alt="Profile"
@@ -126,7 +268,7 @@ export default function TMAHomePage() {
         {/* Cart Bag on Right with Notification Count (61:2445) */}
         <Link
           href="/shop/cart"
-          className="relative p-2 flex items-center justify-center"
+          className="relative p-2 flex items-center justify-center active:scale-95 transition-transform"
         >
           <Image
             src="/images/bag_happy.svg"
@@ -143,13 +285,19 @@ export default function TMAHomePage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="w-full max-w-[393px] flex flex-col items-center py-[10px] px-[14px]">
+      <main className="w-full max-w-[430px] flex flex-col items-center py-[10px] px-[14px]">
         {/* 1. Section: ቅርጫ (19:127) */}
         <section className="w-full flex flex-col gap-[8px] py-[6px]">
-          <div className="flex items-center px-[4px]">
+          <div className="flex items-center justify-between px-[4px]">
             <h2 className="text-[15px] font-medium text-black leading-[1.4]">
               ቅርጫ
             </h2>
+            <Link
+              href="/kircha"
+              className="text-[12px] font-semibold text-[#74a156] hover:text-[#669049] active:scale-95 transition-all px-1 py-0.5"
+            >
+              See all
+            </Link>
           </div>
 
           {/* 3 White Animal Cards (19:130) */}
@@ -177,67 +325,99 @@ export default function TMAHomePage() {
           </div>
         </section>
 
-        {/* 2. Middle Hero Banner Section (44:595) */}
+        {/* 2. Middle Hero Swipable Banner Section (44:595) */}
         <section className="w-full flex flex-col items-center py-[12px]">
+          {/* Swipable Carousel Box */}
           <div
-            className="h-[122px] w-full overflow-hidden relative rounded-[12px] shrink-0 shadow-xs"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, rgba(116, 161, 86, 0.6) 0%, rgba(116, 161, 86, 0.6) 100%), linear-gradient(90deg, rgb(116, 161, 86) 0%, rgb(116, 161, 86) 100%)",
-            }}
+            className="h-[126px] w-full overflow-hidden relative rounded-[12px] shrink-0 shadow-xs cursor-pointer select-none touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
           >
-            {/* Background Cattle Image from Figma */}
-            <div className="absolute inset-0">
-              <Image
-                src="/images/figma_banner.png"
-                alt="Fondi Farms Cattle"
-                fill
-                className="object-cover -scale-y-100 rotate-180 brightness-95"
-                priority
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(90deg, rgba(116, 161, 86, 0.65) 0%, rgba(116, 161, 86, 0.35) 100%)",
-                }}
-              />
-            </div>
+            {/* Slides track */}
+            <div
+              className="flex h-full w-full transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {bannerSlides.map((slide, idx) => (
+                <div
+                  key={slide.id}
+                  className="relative h-full w-full shrink-0 overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(90deg, rgba(116, 161, 86, 0.75) 0%, rgba(116, 161, 86, 0.6) 100%)",
+                  }}
+                >
+                  {/* Background Photo with soft dark/green overlay */}
+                  <div className="absolute inset-0">
+                    <Image
+                      src={slide.image}
+                      alt={slide.title}
+                      fill
+                      className="object-cover -scale-y-100 rotate-180 brightness-95"
+                      priority={idx === 0}
+                      draggable={false}
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(116, 161, 86, 0.7) 0%, rgba(116, 161, 86, 0.4) 100%)",
+                      }}
+                    />
+                  </div>
 
-            {/* Headline Text in Amharic (44:598) */}
-            <p className="absolute left-[20.5px] top-[40px] text-[20px] font-semibold text-white leading-normal drop-shadow-sm whitespace-nowrap">
-              ጥራት መለያችን ነው !
-            </p>
+                  {/* Headline Text */}
+                  <p className="absolute left-[20.5px] top-[40px] text-[19px] font-semibold text-white leading-normal drop-shadow-sm whitespace-nowrap">
+                    {slide.title}
+                  </p>
 
-            {/* Pill Badge 1: ተመጣጣኝ ዋጋ (44:599) */}
-            <div className="absolute left-[20.5px] top-[85px] flex items-center gap-[4px] bg-black/20 backdrop-blur-xs px-[7px] py-[2px] rounded-full border border-white/20">
-              <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
-                <PercentageCircle size={12} color="#74a156" variant="Bold" />
-              </div>
-              <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
-                ተመጣጣኝ ዋጋ
-              </span>
-            </div>
+                  {/* Pill Badge 1 */}
+                  <div className="absolute left-[20.5px] top-[85px] flex items-center gap-[4px] bg-black/25 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
+                    <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
+                      {slide.badge1Icon}
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
+                      {slide.badge1Text}
+                    </span>
+                  </div>
 
-            {/* Pill Badge 2: የተሻለ ጥራት (44:605) */}
-            <div className="absolute left-[128.5px] top-[85px] flex items-center gap-[4px] bg-black/20 backdrop-blur-xs px-[7px] py-[2px] rounded-full border border-white/20">
-              <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
-                <TickCircle size={12} color="#74a156" variant="Bold" />
-              </div>
-              <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
-                የተሻለ ጥራት
-              </span>
+                  {/* Pill Badge 2 */}
+                  <div className="absolute left-[132px] top-[85px] flex items-center gap-[4px] bg-black/25 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
+                    <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
+                      {slide.badge2Icon}
+                    </div>
+                    <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
+                      {slide.badge2Text}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Carousel Dots Indicator (44:611) */}
-          <div className="pt-[8px] flex items-center justify-center">
-            <Image
-              src="/images/dots.svg"
-              alt="Indicator"
-              width={34}
-              height={5}
-            />
+          {/* Interactive Carousel Dots Indicator (44:611) */}
+          <div className="pt-[8px] flex items-center justify-center gap-1.5">
+            {bannerSlides.map((_, dotIdx) => (
+              <button
+                key={dotIdx}
+                type="button"
+                onClick={() => {
+                  setCurrentSlide(dotIdx);
+                  resetBannerTimer();
+                }}
+                className={cn(
+                  "rounded-full transition-all duration-300 cursor-pointer",
+                  dotIdx === currentSlide
+                    ? "bg-[#74a156] w-5 h-1.5 shadow-xs"
+                    : "bg-stone-300 w-1.5 h-1.5 hover:bg-stone-400",
+                )}
+                aria-label={`Go to slide ${dotIdx + 1}`}
+              />
+            ))}
           </div>
         </section>
 
@@ -286,7 +466,7 @@ export default function TMAHomePage() {
                     {/* Add Button (44:820) */}
                     <button
                       onClick={(e) => handleAddToCart(e, product)}
-                      className="bg-[#74a156] hover:bg-[#669049] active:scale-90 transition-all rounded-full size-[24px] flex items-center justify-center shrink-0 shadow-2xs"
+                      className="bg-[#74a156] hover:bg-[#669049] active:scale-90 transition-all rounded-full size-[24px] flex items-center justify-center shrink-0 shadow-2xs cursor-pointer"
                       aria-label={`Add ${product.name} to cart`}
                     >
                       <Add size={14} color="#ffffff" />

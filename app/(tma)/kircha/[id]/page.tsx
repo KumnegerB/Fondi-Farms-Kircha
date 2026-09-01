@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { use, useState, useMemo } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import React, { use, useState, useMemo } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft2,
   Minus,
@@ -12,11 +12,11 @@ import {
   Location,
   ArrowRight2,
   Gallery,
-} from 'iconsax-react';
-import { formatETB, formatKirchaQuantity } from '@/lib/utils';
-import { calculateKirchaPricing } from '@/lib/kircha';
-import { CattleImageSlider } from '@/components/tma/CattleImageSlider';
-import { PhotoLightbox } from '@/components/tma/PhotoLightbox';
+} from "iconsax-react";
+import { formatETB, formatKirchaQuantity } from "@/lib/utils";
+import { calculateKirchaPricing } from "@/lib/kircha";
+import { CattleImageSlider } from "@/components/tma/CattleImageSlider";
+import { PhotoLightbox } from "@/components/tma/PhotoLightbox";
 
 export default function KirchaDetailPage({
   params,
@@ -35,26 +35,26 @@ export default function KirchaDetailPage({
   // Listing configuration with multiple cattle photos
   const listingData = useMemo(() => {
     return {
-      id: id || 'krc-1',
-      titleAmharic: 'ሙሉ መደብ',
-      cattleName: 'Borana Ox K-024',
-      tagNumber: 'OX K-024',
-      breed: 'BORANA OX',
-      weight: '~450KG',
+      id: id || "krc-1",
+      titleAmharic: "ሙሉ መደብ",
+      cattleName: "Borana Ox K-024",
+      tagNumber: "OX K-024",
+      breed: "BORANA OX",
+      weight: "~450KG",
       description:
-        'Healthy ox raised in the Ambo highlands. Perfect for holiday Kircha.',
+        "Healthy ox raised in the Ambo highlands. Perfect for holiday Kircha.",
       images: [
-        '/images/borana_ox_detail.png',
-        '/images/figma_banner.png',
-        '/images/arsi_bull.png',
-        '/images/figma_ox.png',
+        "/images/borana_ox_detail.png",
+        "/images/figma_banner.png",
+        "/images/arsi_bull.png",
+        "/images/figma_ox.png",
       ],
       totalSellingPriceETB: 216000,
       totalKirchaQuantity: 12,
       pricePerKirchaETB: 18000,
       depositPerKirchaETB: 4500, // 4,500 ETB deposit per 1 full Kircha
-      slaughterScheduleText: 'Saturday, Sept 5 • 7:00 AM',
-      locationText: 'Ambo Farm',
+      slaughterScheduleText: "Saturday, Sept 5 • 7:00 AM",
+      locationText: "Ambo Farm",
       maxAvailableQuarterUnits: 12, // up to 3 full kircha available
     };
   }, [id]);
@@ -98,9 +98,9 @@ export default function KirchaDetailPage({
   };
 
   return (
-    <div className="bg-[#f2f4f2] min-h-screen pb-[120px] flex flex-col items-center">
+    <div className="bg-[#f2f4f2] min-h-screen pb-[220px] flex flex-col items-center">
       {/* Hero Media Container with 5-Second Auto Slider (49:1441) */}
-      <div className="relative w-full max-w-[393px] h-[230px] overflow-hidden bg-stone-900 shrink-0">
+      <div className="relative w-full max-w-[430px] h-[230px] overflow-hidden bg-stone-900 shrink-0">
         <CattleImageSlider
           images={listingData.images}
           alt={listingData.cattleName}
@@ -130,7 +130,7 @@ export default function KirchaDetailPage({
       </div>
 
       {/* Main Content (49:1447) */}
-      <div className="w-full max-w-[393px] flex flex-col gap-[12px] items-start px-[16px] py-[12px]">
+      <div className="w-full max-w-[430px] flex flex-col gap-[12px] items-start px-[16px] py-[12px]">
         {/* Header Section (49:1448) */}
         <div className="flex flex-col gap-[8px] w-full">
           {/* Title & Base Price Row (49:1449) */}
@@ -189,7 +189,7 @@ export default function KirchaDetailPage({
             {/* Quantity Display */}
             <div className="flex flex-col items-center">
               <span className="text-[22px] font-extrabold text-[#1a1c19] tracking-[-0.22px] leading-[28px]">
-                {pricing.fractionDisplay.replace(' Kircha', '')}
+                {pricing.fractionDisplay.replace(" Kircha", "")}
               </span>
               <span className="text-[12px] font-bold text-[#424843] tracking-[0.6px] uppercase leading-[16px]">
                 KIRCHA
@@ -282,7 +282,7 @@ export default function KirchaDetailPage({
       </div>
 
       {/* Fixed Bottom Action Bar (49:1529) */}
-      <div className="fixed bottom-[70px] left-0 right-0 max-w-[393px] mx-auto p-[14px] bg-[#f2f4f2]/95 backdrop-blur-xs z-40">
+      <div className="fixed bottom-[70px] left-0 right-0 max-w-[430px] mx-auto p-[14px] bg-[#f2f4f2]/95 backdrop-blur-xs z-40">
         <button
           onClick={handleReserve}
           className="w-full bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white rounded-[12px] py-[16px] flex items-center justify-center gap-[8px] shadow-sm drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)]"
@@ -335,7 +335,7 @@ export default function KirchaDetailPage({
               <button
                 onClick={() => {
                   setIsSuccessModalOpen(false);
-                  router.push('/orders');
+                  router.push("/orders");
                 }}
                 className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold"
               >

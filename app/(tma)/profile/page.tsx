@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   User,
   Call,
@@ -9,59 +9,57 @@ import {
   Headphone,
   DocumentText,
   ArrowRight2,
-} from 'iconsax-react';
-import { useTelegram } from '@/hooks/useTelegram';
-import { APP_CONFIG } from '@/lib/constants';
+} from "iconsax-react";
+import { useTelegram } from "@/hooks/useTelegram";
+import { APP_CONFIG } from "@/lib/constants";
 
 export default function ProfilePage() {
   const { user } = useTelegram();
-  const [phoneNumber, setPhoneNumber] = useState('+251 911 234 567');
+  const [phoneNumber, setPhoneNumber] = useState("+251 911 234 567");
   const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [phoneInput, setPhoneInput] = useState(phoneNumber);
 
   const displayName = user
-    ? `${user.first_name} ${user.last_name || ''}`.trim()
-    : 'Abebe Kebede';
+    ? `${user.first_name} ${user.last_name || ""}`.trim()
+    : "Abebe Kebede";
 
   const menuLinks = [
     {
-      id: 'settings',
-      title: 'Account Settings',
-      subtitle: 'Preferences, Payment Methods',
-      icon: (
-        <Setting2 size={20} color="#1a1c19" variant="Linear" />
-      ),
-      onClick: () => alert('Preferences & Payment Methods settings'),
+      id: "settings",
+      title: "Account Settings",
+      subtitle: "Preferences, Payment Methods",
+      icon: <Setting2 size={20} color="#1a1c19" variant="Linear" />,
+      onClick: () => alert("Preferences & Payment Methods settings"),
     },
     {
-      id: 'pickup',
-      title: 'Pickup Info',
-      subtitle: 'Designated Kircha spots',
-      icon: (
-        <Location size={20} color="#1a1c19" variant="Linear" />
-      ),
+      id: "pickup",
+      title: "Pickup Info",
+      subtitle: "Designated Kircha spots",
+      icon: <Location size={20} color="#1a1c19" variant="Linear" />,
       onClick: () =>
-        alert(`Designated Kircha Pickup Spot: ${APP_CONFIG.defaultPickupLocation}`),
+        alert(
+          `Designated Kircha Pickup Spot: ${APP_CONFIG.defaultPickupLocation}`,
+        ),
     },
     {
-      id: 'support',
-      title: 'Help & Support',
-      subtitle: 'FAQs, Contact Admin',
-      icon: (
-        <Headphone size={20} color="#1a1c19" variant="Linear" />
-      ),
+      id: "support",
+      title: "Help & Support",
+      subtitle: "FAQs, Contact Admin",
+      icon: <Headphone size={20} color="#1a1c19" variant="Linear" />,
       onClick: () =>
-        alert(`Support: ${APP_CONFIG.supportPhone} | ${APP_CONFIG.supportTelegram}`),
+        alert(
+          `Support: ${APP_CONFIG.supportPhone} | ${APP_CONFIG.supportTelegram}`,
+        ),
     },
     {
-      id: 'legal',
-      title: 'Legal',
-      subtitle: 'Terms of Service, Privacy',
-      icon: (
-        <DocumentText size={20} color="#1a1c19" variant="Linear" />
-      ),
+      id: "legal",
+      title: "Legal",
+      subtitle: "Terms of Service, Privacy",
+      icon: <DocumentText size={20} color="#1a1c19" variant="Linear" />,
       onClick: () =>
-        alert('Digital Kircha Terms: Non-refundable deposits, Ambo farm collection policy.'),
+        alert(
+          "Digital Kircha Terms: Non-refundable deposits, Ambo farm collection policy.",
+        ),
     },
   ];
 
@@ -71,7 +69,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="bg-[#f2f4f2] min-h-screen pb-[110px] flex flex-col items-center">
+    <div className="bg-[#f2f4f2] min-h-screen pb-[140px] flex flex-col items-center">
       {/* Top Header (43:332) */}
       <div className="bg-white w-full flex h-[68px] items-center justify-center px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
         <h1 className="font-semibold text-[#111827] text-[22px] text-center tracking-[-0.33px]">
@@ -80,7 +78,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content Container */}
-      <div className="w-full max-w-[393px] flex flex-col gap-[16px] items-center py-[14px] px-[16px]">
+      <div className="w-full max-w-[430px] flex flex-col gap-[16px] items-center py-[14px] px-[16px]">
         {/* User Identity Header Card (44:524) */}
         <div className="bg-white border border-[rgba(194,200,192,0.2)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-full p-[20px] relative overflow-hidden flex flex-col items-center">
           {/* Subtle decorative gradient */}
@@ -88,7 +86,7 @@ export default function ProfilePage() {
             className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage:
-                'linear-gradient(152.67deg, rgba(200, 235, 208, 0.3) 0%, rgba(200, 235, 208, 0) 100%)',
+                "linear-gradient(152.67deg, rgba(200, 235, 208, 0.3) 0%, rgba(200, 235, 208, 0) 100%)",
             }}
           />
 
@@ -106,7 +104,12 @@ export default function ProfilePage() {
                   {displayName}
                 </h2>
                 <div className="flex items-center gap-[6px] text-[#424843]">
-                  <Call size={16} color="#424843" variant="Linear" className="shrink-0" />
+                  <Call
+                    size={16}
+                    color="#424843"
+                    variant="Linear"
+                    className="shrink-0"
+                  />
                   <span className="text-[15px] font-normal tracking-tight">
                     {phoneNumber}
                   </span>

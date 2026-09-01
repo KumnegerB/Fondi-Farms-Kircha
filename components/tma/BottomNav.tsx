@@ -48,7 +48,7 @@ export function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[393px] border-t border-[rgba(0,0,0,0.08)] bg-white">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto w-full max-w-[430px] border-t border-[rgba(0,0,0,0.08)] bg-white">
       <div className="flex h-[70px] items-center justify-around px-[12px]">
         {navItems.map((item) => {
           const isActive = item.exact

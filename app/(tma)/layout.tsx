@@ -11,10 +11,10 @@ export default function TMALayout({
   return (
     <CartProvider>
       <TelegramInit />
-      <div className="min-h-screen bg-stone-100 flex justify-center">
-        {/* Mobile Viewport Container matching Telegram Mini App */}
-        <div className="w-full max-w-[393px] min-h-screen bg-[#f2f4f2] text-stone-900 flex flex-col shadow-xl relative overflow-x-hidden">
-          <main className="flex-1 flex flex-col">{children}</main>
+      <div className="min-h-screen bg-stone-100 flex justify-center w-full">
+        {/* Mobile Viewport Container taking full device width up to max 430px */}
+        <div className="w-full max-w-[430px] min-h-screen bg-[#f2f4f2] text-stone-900 flex flex-col shadow-xl relative overflow-x-hidden">
+          <main className="flex-1 flex flex-col w-full">{children}</main>
           <BottomNav />
         </div>
       </div>

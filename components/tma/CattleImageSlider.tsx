@@ -27,7 +27,12 @@ export function CattleImageSlider({
   const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto slide every 5 seconds
+  // Touch / Mouse Swipe references
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+
+  // Auto slide timer
   useEffect(() => {
     if (!images || images.length <= 1) return;
 
@@ -40,30 +45,113 @@ export function CattleImageSlider({
     };
   }, [images, autoSlideInterval]);
 
-  const handleNext = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (!images || images.length === 0) return;
-    setCurrentIndex((prev) => (prev + 1) % images.length);
+  const resetTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (images && images.length > 1) {
+      timerRef.current = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+      }, autoSlideInterval);
+    }
   };
 
-  const handlePrev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleNext = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    if (!images || images.length === 0) return;
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+    resetTimer();
+  };
+
+  const handlePrev = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
     if (!images || images.length === 0) return;
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    resetTimer();
   };
 
   const handleDotClick = (e: React.MouseEvent, index: number) => {
     e.stopPropagation();
     e.preventDefault();
     setCurrentIndex(index);
+    resetTimer();
   };
 
-  const handleContainerClick = (e: React.MouseEvent) => {
-    if (onImageClick) {
-      onImageClick(currentIndex);
+  // Touch Swipe Handlers for Telegram Mini Apps
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchEndXRef.current = e.touches[0].clientX;
+    isDraggingRef.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndXRef.current = e.touches[0].clientX;
+    if (touchStartXRef.current !== null) {
+      const diff = Math.abs(touchEndXRef.current - touchStartXRef.current);
+      if (diff > 10) {
+        isDraggingRef.current = true;
+      }
     }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
+      const diffX = touchStartXRef.current - touchEndXRef.current;
+      const swipeThreshold = 40; // minimum 40px to trigger swipe
+
+      if (diffX > swipeThreshold) {
+        // Swiped Left -> Next image
+        handleNext();
+      } else if (diffX < -swipeThreshold) {
+        // Swiped Right -> Prev image
+        handlePrev();
+      } else if (!isDraggingRef.current && onImageClick) {
+        // Tap without drag -> Open Lightbox
+        onImageClick(currentIndex);
+      }
+    }
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+    isDraggingRef.current = false;
+  };
+
+  // Mouse Drag Handlers for Desktop Testing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    touchStartXRef.current = e.clientX;
+    touchEndXRef.current = e.clientX;
+    isDraggingRef.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (touchStartXRef.current !== null) {
+      touchEndXRef.current = e.clientX;
+      const diff = Math.abs(e.clientX - touchStartXRef.current);
+      if (diff > 10) {
+        isDraggingRef.current = true;
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
+      const diffX = touchStartXRef.current - touchEndXRef.current;
+      const swipeThreshold = 40;
+
+      if (diffX > swipeThreshold) {
+        handleNext();
+      } else if (diffX < -swipeThreshold) {
+        handlePrev();
+      } else if (!isDraggingRef.current && onImageClick) {
+        onImageClick(currentIndex);
+      }
+    }
+    touchStartXRef.current = null;
+    touchEndXRef.current = null;
+    isDraggingRef.current = false;
   };
 
   if (!images || images.length === 0) {
@@ -75,15 +163,20 @@ export function CattleImageSlider({
   return (
     <div
       className={cn(
-        'relative w-full overflow-hidden bg-stone-900 select-none group cursor-pointer',
+        'relative w-full overflow-hidden bg-stone-900 select-none group cursor-pointer touch-pan-y',
         aspectRatioClass,
         className
       )}
-      onClick={handleContainerClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
       {/* Images Slider Container */}
       <div
-        className="flex h-full w-full transition-transform duration-500 ease-out"
+        className="flex h-full w-full transition-transform duration-500 ease-out pointer-events-none"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {images.map((imgSrc, idx) => (
@@ -94,6 +187,7 @@ export function CattleImageSlider({
               fill
               className="object-cover"
               priority={idx === 0}
+              draggable={false}
             />
           </div>
         ))}

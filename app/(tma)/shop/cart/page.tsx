@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft2,
   Trash,
@@ -13,10 +13,10 @@ import {
   Location,
   CardTick,
   TickCircle,
-} from 'iconsax-react';
-import { useAppStore } from '@/store/useAppStore';
-import { formatETB } from '@/lib/utils';
-import { APP_CONFIG } from '@/lib/constants';
+} from "iconsax-react";
+import { useAppStore } from "@/store/useAppStore";
+import { formatETB } from "@/lib/utils";
+import { APP_CONFIG } from "@/lib/constants";
 
 export default function ShopCartPage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function ShopCartPage() {
   };
 
   return (
-    <div className="bg-[#f2f4f2] min-h-screen pb-[120px] flex flex-col items-center">
+    <div className="bg-[#f2f4f2] min-h-screen pb-[150px] flex flex-col items-center">
       {/* Top Header */}
       <header className="bg-white w-full flex h-[68px] items-center justify-between px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
         <button
@@ -64,7 +64,7 @@ export default function ShopCartPage() {
       </header>
 
       {/* Main Content Area */}
-      <div className="w-full max-w-[393px] flex flex-col gap-[14px] items-center py-[12px] px-[14px]">
+      <div className="w-full max-w-[430px] flex flex-col gap-[14px] items-center py-[12px] px-[14px]">
         {cartItems.length === 0 ? (
           <div className="flex-1 w-full flex flex-col items-center justify-center text-center p-8 space-y-4 my-12 bg-white rounded-[16px] border border-[rgba(194,200,192,0.3)] shadow-xs">
             <div className="size-16 bg-[#f2f4f2] rounded-full flex items-center justify-center text-stone-400 mx-auto">
@@ -75,7 +75,8 @@ export default function ShopCartPage() {
                 Your cart is empty
               </h3>
               <p className="text-xs text-stone-500 mt-1 max-w-[220px]">
-                Explore fresh dairy, eggs, and poultry products produced at our Ambo farm.
+                Explore fresh dairy, eggs, and poultry products produced at our
+                Ambo farm.
               </p>
             </div>
             <Link href="/shop" className="pt-2 w-full">
@@ -96,7 +97,7 @@ export default function ShopCartPage() {
                   {/* Thumbnail Image */}
                   <div className="relative size-[64px] rounded-[8px] overflow-hidden bg-[#e2e3dd] shrink-0">
                     <Image
-                      src={product.images[0] || '/images/fresh_milk_yogurt.png'}
+                      src={product.images[0] || "/images/fresh_milk_yogurt.png"}
                       alt={product.name}
                       fill
                       className="object-cover mix-blend-multiply"
@@ -141,7 +142,9 @@ export default function ShopCartPage() {
 
                     <button
                       type="button"
-                      onClick={() => updateCartQuantity(product.id, quantity + 1)}
+                      onClick={() =>
+                        updateCartQuantity(product.id, quantity + 1)
+                      }
                       className="size-[26px] flex items-center justify-center rounded-[6px] bg-white hover:bg-stone-100 text-stone-700 shadow-2xs cursor-pointer active:scale-90"
                       aria-label="Increase quantity"
                     >
@@ -171,7 +174,9 @@ export default function ShopCartPage() {
             <div className="bg-[#f3f4ee] border border-[rgba(194,200,192,0.4)] rounded-[12px] p-[14px] flex flex-col gap-[8px] shadow-2xs">
               <div className="flex justify-between items-center text-[13px] text-[#424843]">
                 <span>Items Subtotal:</span>
-                <span className="font-semibold text-[#1a1c19]">{formatETB(totalAmountETB)}</span>
+                <span className="font-semibold text-[#1a1c19]">
+                  {formatETB(totalAmountETB)}
+                </span>
               </div>
               <div className="flex justify-between items-center text-[13px] text-[#424843]">
                 <span>Pickup Fee:</span>
@@ -181,7 +186,9 @@ export default function ShopCartPage() {
               <div className="h-px bg-[#c2c8c0] my-1" />
 
               <div className="flex justify-between items-center">
-                <span className="text-[15px] font-bold text-[#1a1c19]">Total Payment:</span>
+                <span className="text-[15px] font-bold text-[#1a1c19]">
+                  Total Payment:
+                </span>
                 <span className="text-[18px] font-extrabold text-[#163422]">
                   {formatETB(totalAmountETB)}
                 </span>
@@ -212,16 +219,21 @@ export default function ShopCartPage() {
                 Order Placed Successfully!
               </h3>
               <p className="text-xs text-stone-500 mt-1">
-                Your shop order is confirmed for collection at <strong>{APP_CONFIG.defaultPickupLocation}</strong>.
+                Your shop order is confirmed for collection at{" "}
+                <strong>{APP_CONFIG.defaultPickupLocation}</strong>.
               </p>
               <div className="bg-stone-50 rounded-xl p-3 mt-3 text-xs space-y-1 text-left border border-stone-200">
                 <div className="flex justify-between">
                   <span>Paid Total:</span>
-                  <strong className="text-emerald-700">{formatETB(totalAmountETB)}</strong>
+                  <strong className="text-emerald-700">
+                    {formatETB(totalAmountETB)}
+                  </strong>
                 </div>
                 <div className="flex justify-between text-stone-500">
                   <span>Status:</span>
-                  <span className="font-semibold text-amber-600">READY FOR PICKUP</span>
+                  <span className="font-semibold text-amber-600">
+                    READY FOR PICKUP
+                  </span>
                 </div>
               </div>
             </div>
@@ -231,7 +243,7 @@ export default function ShopCartPage() {
                 onClick={() => {
                   clearCart();
                   setIsSuccessModalOpen(false);
-                  router.push('/orders');
+                  router.push("/orders");
                 }}
                 className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold"
               >
@@ -241,7 +253,7 @@ export default function ShopCartPage() {
                 onClick={() => {
                   clearCart();
                   setIsSuccessModalOpen(false);
-                  router.push('/shop');
+                  router.push("/shop");
                 }}
                 className="px-4 border border-stone-300 py-2.5 rounded-xl text-xs text-stone-600"
               >

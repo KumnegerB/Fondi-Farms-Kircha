@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { CardTick, Danger, InfoCircle } from 'iconsax-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { CardTick, Danger, InfoCircle } from "iconsax-react";
+import { cn } from "@/lib/utils";
 
 interface KirchaOrder {
   id: string;
@@ -16,7 +16,7 @@ interface KirchaOrder {
   totalValueETB: number;
   paidDepositETB: number;
   remainingBalanceETB: number;
-  status: 'balance_due' | 'paid' | 'ready_for_pickup' | 'collected';
+  status: "balance_due" | "paid" | "ready_for_pickup" | "collected";
   statusLabel: string;
 }
 
@@ -30,50 +30,50 @@ interface ShopOrder {
 }
 
 export default function OrdersPage() {
-  const [activeTab, setActiveTab] = useState<'kircha' | 'shop'>('kircha');
+  const [activeTab, setActiveTab] = useState<"kircha" | "shop">("kircha");
 
   const kirchaOrders: KirchaOrder[] = [
     {
-      id: 'krc-ord-1',
-      cattleName: 'Arsi Bull K-025',
-      tagNumber: 'OX K-024',
-      cattleImage: '/images/arsi_bull.png',
-      reservedUnitsText: '1.25 Units',
-      reservedSharesText: '(5/4 shares)',
+      id: "krc-ord-1",
+      cattleName: "Arsi Bull K-025",
+      tagNumber: "OX K-024",
+      cattleImage: "/images/arsi_bull.png",
+      reservedUnitsText: "1.25 Units",
+      reservedSharesText: "(5/4 shares)",
       totalValueETB: 22500,
       paidDepositETB: 4500,
       remainingBalanceETB: 18000,
-      status: 'balance_due',
-      statusLabel: 'BALANCE DUE',
+      status: "balance_due",
+      statusLabel: "BALANCE DUE",
     },
     {
-      id: 'krc-ord-2',
-      cattleName: 'Borana Prime Ox K-024',
-      tagNumber: 'OX K-020',
-      cattleImage: '/images/figma_banner.png',
-      reservedUnitsText: '0.50 Units',
-      reservedSharesText: '(2/4 shares)',
+      id: "krc-ord-2",
+      cattleName: "Borana Prime Ox K-024",
+      tagNumber: "OX K-020",
+      cattleImage: "/images/figma_banner.png",
+      reservedUnitsText: "0.50 Units",
+      reservedSharesText: "(2/4 shares)",
       totalValueETB: 10000,
       paidDepositETB: 2000,
       remainingBalanceETB: 8000,
-      status: 'balance_due',
-      statusLabel: 'BALANCE DUE',
+      status: "balance_due",
+      statusLabel: "BALANCE DUE",
     },
   ];
 
   const shopOrders: ShopOrder[] = [
     {
-      id: 'shp-ord-1',
-      orderNumber: 'SHP-1092',
-      productName: 'Fresh Farm Eggs (2 Trays)',
-      quantityText: '2 Trays (60 Eggs)',
+      id: "shp-ord-1",
+      orderNumber: "SHP-1092",
+      productName: "Fresh Farm Eggs (2 Trays)",
+      quantityText: "2 Trays (60 Eggs)",
       totalETB: 1300,
-      statusLabel: 'READY FOR PICKUP',
+      statusLabel: "READY FOR PICKUP",
     },
   ];
 
   return (
-    <div className="bg-[#f2f4f2] min-h-screen pb-[110px] flex flex-col items-center">
+    <div className="bg-[#f2f4f2] min-h-screen pb-[140px] flex flex-col items-center">
       {/* Top Header (52:2115) */}
       <div className="bg-white w-full flex h-[68px] items-center justify-center px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
         <h1 className="font-semibold text-[#111827] text-[22px] text-center tracking-[-0.33px]">
@@ -81,38 +81,40 @@ export default function OrdersPage() {
         </h1>
       </div>
 
-      {/* Main Content Area (52:1975) */}
-      <div className="w-full max-w-[393px] flex flex-col gap-[12px] items-center py-[10px] px-[14px]">
+      {/* Sticky Floating Tab Switcher Bar */}
+      <div className="sticky top-[68px] z-30 w-full max-w-[430px] px-[14px] pt-[8px] pb-[8px] bg-[#f2f4f2]/95 backdrop-blur-md">
         {/* Dual Tab Switcher (61:2575) */}
-        <div className="w-[366px] bg-[#f8fafc] border border-[rgba(226,232,240,0.7)] h-[44px] rounded-[12px] p-[5px] flex items-center justify-between shrink-0 shadow-2xs">
+        <div className="w-full bg-[#f8fafc] border border-[rgba(226,232,240,0.7)] h-[44px] rounded-[12px] p-[5px] flex items-center justify-between shadow-2xs">
           {/* Tab 1: ቅርጫ */}
           <button
-            onClick={() => setActiveTab('kircha')}
+            onClick={() => setActiveTab("kircha")}
             className={cn(
-              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all',
-              activeTab === 'kircha'
-                ? 'bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]'
-                : 'hover:bg-stone-200/50'
+              "flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer",
+              activeTab === "kircha"
+                ? "bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
+                : "hover:bg-stone-200/50",
             )}
           >
             <span
               className={cn(
-                'text-[12px] whitespace-nowrap',
-                activeTab === 'kircha' ? 'text-white font-medium' : 'text-[#62748e]'
+                "text-[12px] whitespace-nowrap",
+                activeTab === "kircha"
+                  ? "text-white font-medium"
+                  : "text-[#62748e]",
               )}
             >
               ቅርጫ
             </span>
             <div
               className={cn(
-                'size-[18px] rounded-full flex items-center justify-center shrink-0',
-                activeTab === 'kircha' ? 'bg-white' : 'bg-[#74a156]'
+                "size-[18px] rounded-full flex items-center justify-center shrink-0",
+                activeTab === "kircha" ? "bg-white" : "bg-[#74a156]",
               )}
             >
               <span
                 className={cn(
-                  'text-[10px] font-semibold leading-none',
-                  activeTab === 'kircha' ? 'text-[#74a156]' : 'text-white'
+                  "text-[10px] font-semibold leading-none",
+                  activeTab === "kircha" ? "text-[#74a156]" : "text-white",
                 )}
               >
                 {kirchaOrders.length}
@@ -122,32 +124,34 @@ export default function OrdersPage() {
 
           {/* Tab 2: ሌሎች ምርቶች ትዛዝ */}
           <button
-            onClick={() => setActiveTab('shop')}
+            onClick={() => setActiveTab("shop")}
             className={cn(
-              'flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all',
-              activeTab === 'shop'
-                ? 'bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]'
-                : 'hover:bg-stone-200/50'
+              "flex-1 h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer",
+              activeTab === "shop"
+                ? "bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
+                : "hover:bg-stone-200/50",
             )}
           >
             <span
               className={cn(
-                'text-[12px] whitespace-nowrap',
-                activeTab === 'shop' ? 'text-white font-medium' : 'text-[#62748e]'
+                "text-[12px] whitespace-nowrap",
+                activeTab === "shop"
+                  ? "text-white font-medium"
+                  : "text-[#62748e]",
               )}
             >
               ሌሎች ምርቶች ትዛዝ
             </span>
             <div
               className={cn(
-                'size-[18px] rounded-full flex items-center justify-center shrink-0',
-                activeTab === 'shop' ? 'bg-white' : 'bg-[#74a156]'
+                "size-[18px] rounded-full flex items-center justify-center shrink-0",
+                activeTab === "shop" ? "bg-white" : "bg-[#74a156]",
               )}
             >
               <span
                 className={cn(
-                  'text-[10px] font-semibold leading-none',
-                  activeTab === 'shop' ? 'text-[#74a156]' : 'text-white'
+                  "text-[10px] font-semibold leading-none",
+                  activeTab === "shop" ? "text-[#74a156]" : "text-white",
                 )}
               >
                 {shopOrders.length}
@@ -155,14 +159,17 @@ export default function OrdersPage() {
             </div>
           </button>
         </div>
+      </div>
 
+      {/* Main Content Area (52:1975) */}
+      <div className="w-full max-w-[430px] flex flex-col gap-[12px] items-center py-[6px] px-[14px]">
         {/* Tab 1: Kircha Orders List (52:2234) */}
-        {activeTab === 'kircha' && (
+        {activeTab === "kircha" && (
           <div className="flex flex-col gap-[16px] w-full items-center">
             {kirchaOrders.map((order) => (
               <div
                 key={order.id}
-                className="bg-white border border-[rgba(194,200,192,0.3)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-[358px] overflow-hidden flex flex-col shrink-0"
+                className="bg-white border border-[rgba(194,200,192,0.3)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-full overflow-hidden flex flex-col shrink-0"
               >
                 {/* Media Hero Header (52:2235) */}
                 <div className="h-[160px] w-full relative bg-[#edeee8] overflow-hidden">
@@ -256,7 +263,7 @@ export default function OrdersPage() {
                     <button
                       onClick={() =>
                         alert(
-                          `Paying balance of ${order.remainingBalanceETB.toLocaleString()} ETB via Chapa`
+                          `Paying balance of ${order.remainingBalanceETB.toLocaleString()} ETB via Chapa`,
                         )
                       }
                       className="flex-1 bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white rounded-[8px] py-[12px] text-[12px] font-bold text-center shadow-xs"
@@ -279,12 +286,12 @@ export default function OrdersPage() {
         )}
 
         {/* Tab 2: Shop Orders List */}
-        {activeTab === 'shop' && (
+        {activeTab === "shop" && (
           <div className="flex flex-col gap-[12px] w-full items-center">
             {shopOrders.map((shopOrd) => (
               <div
                 key={shopOrd.id}
-                className="bg-white border border-[rgba(194,200,192,0.3)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-[358px] p-[14px] flex flex-col gap-[8px]"
+                className="bg-white border border-[rgba(194,200,192,0.3)] rounded-[12px] shadow-[0px_2px_8px_0px_rgba(0,0,0,0.04)] w-full p-[14px] flex flex-col gap-[8px]"
               >
                 <div className="flex justify-between items-center">
                   <span className="text-[12px] font-bold text-[#1a1c19]">
