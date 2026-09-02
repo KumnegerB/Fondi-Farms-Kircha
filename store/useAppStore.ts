@@ -1,6 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { ShopProduct, CartItem } from '@/types/shop';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { ShopProduct, CartItem } from "@/types/shop";
+import { Language, translations } from "@/lib/i18n";
 
 export interface KirchaReservation {
   id: string;
@@ -12,12 +13,16 @@ export interface KirchaReservation {
   totalPriceETB: number;
   depositPaidETB: number;
   remainingBalanceETB: number;
-  status: 'balance_due' | 'paid' | 'ready_for_pickup' | 'collected';
+  status: "balance_due" | "paid" | "ready_for_pickup" | "collected";
   slaughterDate: string;
   reservedAt: string;
 }
 
 interface AppState {
+  // Language Localization State
+  language: Language;
+  setLanguage: (lang: Language) => void;
+
   // Cart State
   cartItems: CartItem[];
   addToCart: (product: ShopProduct, quantity?: number) => void;
@@ -42,16 +47,19 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      language: "am", // Default to Amharic as requested
+      setLanguage: (lang: Language) => set({ language: lang }),
+
       cartItems: [
         {
           product: {
-            id: 'shp-1',
-            name: '1L Milk & Yogurt',
-            category: 'dairy',
+            id: "shp-1",
+            name: "1L Milk & Yogurt",
+            category: "dairy",
             priceETB: 250,
-            unit: 'liter',
-            images: ['/images/fresh_milk_yogurt.png'],
-            description: 'Fresh pasteurized farm milk & natural yogurt',
+            unit: "liter",
+            images: ["/images/fresh_milk_yogurt.png"],
+            description: "Fresh pasteurized farm milk & natural yogurt",
             availableStock: 25,
             isActive: true,
             createdAt: new Date().toISOString(),
@@ -61,13 +69,13 @@ export const useAppStore = create<AppState>()(
         },
         {
           product: {
-            id: 'shp-2',
-            name: 'Eggs',
-            category: 'eggs',
+            id: "shp-2",
+            name: "Eggs",
+            category: "eggs",
             priceETB: 24,
-            unit: 'piece',
-            images: ['/images/fresh_milk_yogurt.png'],
-            description: 'Fresh organic free-range farm eggs',
+            unit: "piece",
+            images: ["/images/fresh_milk_yogurt.png"],
+            description: "Fresh organic free-range farm eggs",
             availableStock: 120,
             isActive: true,
             createdAt: new Date().toISOString(),
@@ -80,14 +88,14 @@ export const useAppStore = create<AppState>()(
       addToCart: (product, quantity = 1) => {
         set((state) => {
           const existing = state.cartItems.find(
-            (i) => i.product.id === product.id
+            (i) => i.product.id === product.id,
           );
           if (existing) {
             return {
               cartItems: state.cartItems.map((i) =>
                 i.product.id === product.id
                   ? { ...i, quantity: i.quantity + quantity }
-                  : i
+                  : i,
               ),
             };
           }
@@ -110,54 +118,37 @@ export const useAppStore = create<AppState>()(
         }
         set((state) => ({
           cartItems: state.cartItems.map((i) =>
-            i.product.id === productId ? { ...i, quantity } : i
+            i.product.id === productId ? { ...i, quantity } : i,
           ),
         }));
       },
 
-      clearCart: () => {
-        set({ cartItems: [] });
-      },
+      clearCart: () => set({ cartItems: [] }),
 
       getCartCount: () => {
-        return get().cartItems.reduce((acc, item) => acc + item.quantity, 0);
+        return get().cartItems.reduce((sum, item) => sum + item.quantity, 0);
       },
 
       getCartTotal: () => {
         return get().cartItems.reduce(
-          (acc, item) => acc + item.product.priceETB * item.quantity,
-          0
+          (sum, item) => sum + item.product.priceETB * item.quantity,
+          0,
         );
       },
 
-      // Reservations
       reservations: [
         {
-          id: 'krc-ord-1',
-          cattleId: 'krc-1',
-          cattleName: 'Arsi Bull K-025',
-          tagNumber: 'OX K-024',
-          cattleImage: '/images/arsi_bull.png',
-          quarterUnits: 5,
-          totalPriceETB: 22500,
-          depositPaidETB: 4500,
-          remainingBalanceETB: 18000,
-          status: 'balance_due',
-          slaughterDate: 'Saturday, Sept 5',
-          reservedAt: new Date().toISOString(),
-        },
-        {
-          id: 'krc-ord-2',
-          cattleId: 'krc-2',
-          cattleName: 'Borana Prime Ox K-024',
-          tagNumber: 'OX K-020',
-          cattleImage: '/images/figma_banner.png',
-          quarterUnits: 2,
-          totalPriceETB: 10000,
-          depositPaidETB: 2000,
-          remainingBalanceETB: 8000,
-          status: 'balance_due',
-          slaughterDate: 'Sunday, Sept 6',
+          id: "res-sample-1",
+          cattleId: "krc-1",
+          cattleName: "Arsi Bull (K-025)",
+          tagNumber: "FR10018159",
+          cattleImage: "/images/arsi_bull.png",
+          quarterUnits: 1,
+          totalPriceETB: 16500,
+          depositPaidETB: 4950,
+          remainingBalanceETB: 11550,
+          status: "balance_due",
+          slaughterDate: "Sep 7, 2026 (ጳጉሜ 2, 2018)",
           reservedAt: new Date().toISOString(),
         },
       ],
@@ -169,17 +160,31 @@ export const useAppStore = create<AppState>()(
       },
 
       getOrdersCount: () => {
-        return get().reservations.length;
+        return get().reservations.length + 1; // sample shop order + kircha
       },
 
-      // User
-      userName: 'Mathias A.',
-      userPhone: '+251 911 234 567',
-      setUserName: (userName) => set({ userName }),
-      setUserPhone: (userPhone) => set({ userPhone }),
+      userName: "Mathias A.",
+      userPhone: "+251 91 234 5678",
+      setUserName: (name) => set({ userName: name }),
+      setUserPhone: (phone) => set({ userPhone: phone }),
     }),
     {
-      name: 'fondi-farms-storage',
-    }
-  )
+      name: "fondi-farms-storage",
+    },
+  ),
 );
+
+/**
+ * Custom hook to access active language strings easily
+ */
+export function useI18n() {
+  const language = useAppStore((state) => state.language);
+  const setLanguage = useAppStore((state) => state.setLanguage);
+  const t = translations[language] || translations.en;
+
+  return {
+    language,
+    setLanguage,
+    t,
+  };
+}

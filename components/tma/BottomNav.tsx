@@ -1,46 +1,47 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Home2, Graph, Bag2, ProfileCircle } from 'iconsax-react';
-import { useAppStore } from '@/store/useAppStore';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Home2, Graph, Bag2, ProfileCircle } from "iconsax-react";
+import { useAppStore, useI18n } from "@/store/useAppStore";
 
 export function BottomNav() {
   const pathname = usePathname();
   const { getOrdersCount } = useAppStore();
+  const { t } = useI18n();
   const ordersCount = getOrdersCount();
 
   const navItems = [
     {
-      id: 'home',
-      label: 'መነሻ',
-      href: '/',
+      id: "home",
+      label: t.nav.home,
+      href: "/",
       exact: true,
       icon: Home2,
       badge: 0,
     },
     {
-      id: 'kircha',
-      label: 'ቅርጫ',
-      href: '/kircha',
+      id: "kircha",
+      label: t.nav.kircha,
+      href: "/kircha",
       exact: false,
       icon: Graph,
       badge: 0,
     },
     {
-      id: 'orders',
-      label: 'ትዛዝ',
-      href: '/orders',
+      id: "orders",
+      label: t.nav.orders,
+      href: "/orders",
       exact: false,
       icon: Bag2,
       badge: ordersCount,
     },
     {
-      id: 'profile',
-      label: 'መገለጫ',
-      href: '/profile',
+      id: "profile",
+      label: t.nav.profile,
+      href: "/profile",
       exact: false,
       icon: ProfileCircle,
       badge: 0,
@@ -66,11 +67,11 @@ export function BottomNav() {
               <div className="relative flex size-[24px] items-center justify-center">
                 <Icon
                   size={22}
-                  variant={isActive ? 'Bold' : 'Linear'}
-                  color={isActive ? '#74a156' : '#868685'}
+                  variant={isActive ? "Bold" : "Linear"}
+                  color={isActive ? "#74a156" : "#868685"}
                   className={cn(
-                    'transition-transform',
-                    isActive && 'scale-105'
+                    "transition-transform",
+                    isActive && "scale-105",
                   )}
                 />
                 {item.badge > 0 && (
@@ -82,10 +83,10 @@ export function BottomNav() {
 
               <span
                 className={cn(
-                  'whitespace-nowrap text-[12px] leading-[16px] transition-colors',
+                  "whitespace-nowrap text-[12px] leading-[16px] transition-colors",
                   isActive
-                    ? 'font-bold text-[#74a156]'
-                    : 'font-medium text-[#868685]'
+                    ? "font-bold text-[#74a156]"
+                    : "font-medium text-[#868685]",
                 )}
               >
                 {item.label}
@@ -93,11 +94,6 @@ export function BottomNav() {
             </Link>
           );
         })}
-      </div>
-
-      {/* iPhone Home Indicator bar */}
-      <div className="flex justify-center pb-2">
-        <div className="h-[5px] w-[135px] rounded-[100px] bg-[#687588]" />
       </div>
     </nav>
   );

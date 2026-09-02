@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTelegram } from "@/hooks/useTelegram";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore, useI18n } from "@/store/useAppStore";
 import {
   PercentageCircle,
   TickCircle,
@@ -21,12 +21,14 @@ interface AnimalCategory {
   href: string;
 }
 
+import { ShopProductUnit } from "@/types/shop";
+
 interface ShopProductItem {
   id: string;
   name: string;
   priceETB: number;
   image: string;
-  unit: string;
+  unit: ShopProductUnit;
   category: "dairy" | "eggs" | "poultry";
 }
 
@@ -43,7 +45,8 @@ interface BannerSlide {
 
 export default function TMAHomePage() {
   const { user } = useTelegram();
-  const { cartItems, addToCart, getCartCount } = useAppStore();
+  const { addToCart, getCartCount } = useAppStore();
+  const { t } = useI18n();
 
   const displayName = user
     ? `${user.first_name} ${user.last_name || ""}`.trim()
@@ -58,31 +61,31 @@ export default function TMAHomePage() {
   const bannerSlides: BannerSlide[] = [
     {
       id: "slide-1",
-      title: "ጥራት መለያችን ነው !",
+      title: t.home.banner1Headline,
       badge1Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
-      badge1Text: "ተመጣጣኝ ዋጋ",
+      badge1Text: t.home.banner1Badge1,
       badge2Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
-      badge2Text: "የተሻለ ጥራት",
+      badge2Text: t.home.banner1Badge2,
       image: "/images/figma_banner.png",
       href: "/kircha",
     },
     {
       id: "slide-2",
-      title: "የበዓል ቅርጫ ዝግጅት !",
+      title: t.home.banner2Headline,
       badge1Icon: <ShieldTick size={12} color="#74a156" variant="Bold" />,
-      badge1Text: "100% ጤናማ",
+      badge1Text: t.home.banner2Badge1,
       badge2Icon: <Like1 size={12} color="#74a156" variant="Bold" />,
-      badge2Text: "ቀጥታ ከእርሻ",
+      badge2Text: t.home.banner2Badge2,
       image: "/images/borana_ox_detail.png",
       href: "/kircha",
     },
     {
       id: "slide-3",
-      title: "ትኩስ የወተትና የእንቁላል ምርቶች",
+      title: t.home.banner3Headline,
       badge1Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
-      badge1Text: "በየቀኑ ትኩስ",
+      badge1Text: t.home.banner3Badge1,
       badge2Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
-      badge2Text: "አምቦ እርሻ",
+      badge2Text: t.home.banner3Badge2,
       image: "/images/fresh_milk_yogurt.png",
       href: "/shop",
     },
@@ -92,7 +95,7 @@ export default function TMAHomePage() {
   useEffect(() => {
     bannerTimerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
-    }, 3000);
+    }, 5000);
 
     return () => {
       if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
@@ -173,19 +176,19 @@ export default function TMAHomePage() {
   const kirchaCategories: AnimalCategory[] = [
     {
       id: "ox",
-      name: "Ox",
+      name: t.animals.ox,
       image: "/images/figma_ox.png",
       href: "/kircha?type=ox",
     },
     {
       id: "sheep",
-      name: "Sheep",
+      name: t.animals.sheep,
       image: "/images/figma_sheep.png",
       href: "/kircha?type=sheep",
     },
     {
       id: "goat",
-      name: "Goat",
+      name: t.animals.goat,
       image: "/images/figma_goat.png",
       href: "/kircha?type=goat",
     },
@@ -202,7 +205,7 @@ export default function TMAHomePage() {
     },
     {
       id: "shp-2",
-      name: "Eggs",
+      name: "Farm Fresh Eggs",
       priceETB: 24,
       image: "/images/fresh_milk_yogurt.png",
       unit: "piece",
@@ -213,7 +216,7 @@ export default function TMAHomePage() {
       name: "Milk & Yogurt Kit",
       priceETB: 250,
       image: "/images/fresh_milk_yogurt.png",
-      unit: "kit",
+      unit: "package",
       category: "dairy",
     },
   ];
@@ -228,7 +231,7 @@ export default function TMAHomePage() {
       name: item.name,
       priceETB: item.priceETB,
       images: [item.image],
-      unit: item.unit as any,
+      unit: item.unit,
       category: item.category,
       availableStock: 50,
       isActive: true,
@@ -257,7 +260,7 @@ export default function TMAHomePage() {
           </div>
           <div className="flex flex-col">
             <span className="text-[11px] text-[#323b49] font-medium leading-[14px]">
-              Hello!
+              {t.home.greeting}
             </span>
             <span className="text-[13px] text-[#323b49] font-semibold leading-[16px] truncate max-w-[140px]">
               {displayName}
@@ -286,17 +289,17 @@ export default function TMAHomePage() {
 
       {/* Main Content Area */}
       <main className="w-full max-w-[430px] flex flex-col items-center py-[10px] px-[14px]">
-        {/* 1. Section: ቅርጫ (19:127) */}
+        {/* 1. Section: Kircha Cattle (19:127) */}
         <section className="w-full flex flex-col gap-[8px] py-[6px]">
           <div className="flex items-center justify-between px-[4px]">
-            <h2 className="text-[15px] font-medium text-black leading-[1.4]">
-              ቅርጫ
+            <h2 className="text-[15px] font-bold text-black leading-[1.4]">
+              {t.home.kirchaSectionTitle}
             </h2>
             <Link
               href="/kircha"
               className="text-[12px] font-semibold text-[#74a156] hover:text-[#669049] active:scale-95 transition-all px-1 py-0.5"
             >
-              See all
+              {t.common.seeAll}
             </Link>
           </div>
 
@@ -371,7 +374,7 @@ export default function TMAHomePage() {
                   </div>
 
                   {/* Headline Text */}
-                  <p className="absolute left-[20.5px] top-[40px] text-[19px] font-semibold text-white leading-normal drop-shadow-sm whitespace-nowrap">
+                  <p className="absolute left-[20.5px] top-[40px] text-[18px] font-semibold text-white leading-normal drop-shadow-sm whitespace-nowrap">
                     {slide.title}
                   </p>
 
@@ -421,17 +424,17 @@ export default function TMAHomePage() {
           </div>
         </section>
 
-        {/* 3. Section: ሌሎች ምርቶች (19:146) */}
+        {/* 3. Section: Other Products (19:146) */}
         <section className="w-full flex flex-col gap-[8px] py-[6px]">
           <div className="flex items-center justify-between px-[4px] w-full">
-            <h2 className="text-[15px] font-medium text-black leading-[1.4]">
-              ሌሎች ምርቶች
+            <h2 className="text-[15px] font-bold text-black leading-[1.4]">
+              {t.home.otherProductsTitle}
             </h2>
             <Link
               href="/shop"
               className="text-[12px] font-semibold text-[#74a156] hover:text-[#669049] active:scale-95 transition-all px-1 py-0.5"
             >
-              See all
+              {t.common.seeAll}
             </Link>
           </div>
 
@@ -459,8 +462,8 @@ export default function TMAHomePage() {
                   </span>
 
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[14px] font-bold text-[#163422] leading-[20px]">
-                      {product.priceETB} ETB
+                    <span className="text-[13px] font-bold text-[#163422] leading-[20px]">
+                      {product.priceETB} {t.common.etb}
                     </span>
 
                     {/* Add Button (44:820) */}

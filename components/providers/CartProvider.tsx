@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { CartItem, ShopProduct } from "@/types/shop";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { CartItem, ShopProduct } from '@/types/shop';
 
 interface CartContextType {
   items: CartItem[];
@@ -16,22 +16,19 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
-
-  useEffect(() => {
+  const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return [];
     try {
-      const saved = localStorage.getItem("fondi_shop_cart");
-      if (saved) {
-        setItems(JSON.parse(saved));
-      }
+      const saved = localStorage.getItem('fondi_shop_cart');
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      // ignore
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
     try {
-      localStorage.setItem("fondi_shop_cart", JSON.stringify(items));
+      localStorage.setItem('fondi_shop_cart', JSON.stringify(items));
     } catch {
       // ignore
     }
@@ -43,10 +40,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (existing) {
         const newQty = Math.min(
           existing.quantity + quantity,
-          product.availableStock,
+          product.availableStock
         );
         return prev.map((item) =>
-          item.product.id === product.id ? { ...item, quantity: newQty } : item,
+          item.product.id === product.id ? { ...item, quantity: newQty } : item
         );
       }
       return [
@@ -66,15 +63,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setItems((prev) =>
-      prev.map((item) => {
-        if (item.product.id === productId) {
-          return {
-            ...item,
-            quantity: Math.min(quantity, item.product.availableStock),
-          };
-        }
-        return item;
-      }),
+      prev.map((item) =>
+        item.product.id === productId
+          ? {
+              ...item,
+              quantity: Math.min(quantity, item.product.availableStock),
+            }
+          : item
+      )
     );
   };
 
@@ -84,7 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const totalAmountETB = items.reduce(
     (sum, item) => sum + item.product.priceETB * item.quantity,
-    0,
+    0
   );
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -109,7 +105,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 export function useCart() {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 }

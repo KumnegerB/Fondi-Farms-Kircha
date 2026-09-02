@@ -1,70 +1,35 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   User,
   Call,
-  Setting2,
   Location,
   Headphone,
   DocumentText,
   ArrowRight2,
-} from "iconsax-react";
-import { useTelegram } from "@/hooks/useTelegram";
-import { APP_CONFIG } from "@/lib/constants";
+  Translate,
+  TickCircle,
+} from 'iconsax-react';
+import { useTelegram } from '@/hooks/useTelegram';
+import { useI18n, useAppStore } from '@/store/useAppStore';
+import { APP_CONFIG } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
   const { user } = useTelegram();
-  const [phoneNumber, setPhoneNumber] = useState("+251 911 234 567");
+  const { t, language, setLanguage } = useI18n();
+  const { userPhone, setUserPhone } = useAppStore();
+
   const [isEditingPhone, setIsEditingPhone] = useState(false);
-  const [phoneInput, setPhoneInput] = useState(phoneNumber);
+  const [phoneInput, setPhoneInput] = useState(userPhone || '+251 911 234 567');
 
   const displayName = user
-    ? `${user.first_name} ${user.last_name || ""}`.trim()
-    : "Abebe Kebede";
-
-  const menuLinks = [
-    {
-      id: "settings",
-      title: "Account Settings",
-      subtitle: "Preferences, Payment Methods",
-      icon: <Setting2 size={20} color="#1a1c19" variant="Linear" />,
-      onClick: () => alert("Preferences & Payment Methods settings"),
-    },
-    {
-      id: "pickup",
-      title: "Pickup Info",
-      subtitle: "Designated Kircha spots",
-      icon: <Location size={20} color="#1a1c19" variant="Linear" />,
-      onClick: () =>
-        alert(
-          `Designated Kircha Pickup Spot: ${APP_CONFIG.defaultPickupLocation}`,
-        ),
-    },
-    {
-      id: "support",
-      title: "Help & Support",
-      subtitle: "FAQs, Contact Admin",
-      icon: <Headphone size={20} color="#1a1c19" variant="Linear" />,
-      onClick: () =>
-        alert(
-          `Support: ${APP_CONFIG.supportPhone} | ${APP_CONFIG.supportTelegram}`,
-        ),
-    },
-    {
-      id: "legal",
-      title: "Legal",
-      subtitle: "Terms of Service, Privacy",
-      icon: <DocumentText size={20} color="#1a1c19" variant="Linear" />,
-      onClick: () =>
-        alert(
-          "Digital Kircha Terms: Non-refundable deposits, Ambo farm collection policy.",
-        ),
-    },
-  ];
+    ? `${user.first_name} ${user.last_name || ''}`.trim()
+    : 'Mathias A.';
 
   const handleUpdatePhone = () => {
-    setPhoneNumber(phoneInput);
+    setUserPhone(phoneInput);
     setIsEditingPhone(false);
   };
 
@@ -72,8 +37,8 @@ export default function ProfilePage() {
     <div className="bg-[#f2f4f2] min-h-screen pb-[140px] flex flex-col items-center">
       {/* Top Header (43:332) */}
       <div className="bg-white w-full flex h-[68px] items-center justify-center px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-30">
-        <h1 className="font-semibold text-[#111827] text-[22px] text-center tracking-[-0.33px]">
-          መገለጫ
+        <h1 className="font-semibold text-[#111827] text-[20px] text-center tracking-[-0.33px]">
+          {t.profile.title}
         </h1>
       </div>
 
@@ -86,7 +51,7 @@ export default function ProfilePage() {
             className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage:
-                "linear-gradient(152.67deg, rgba(200, 235, 208, 0.3) 0%, rgba(200, 235, 208, 0) 100%)",
+                'linear-gradient(152.67deg, rgba(200, 235, 208, 0.3) 0%, rgba(200, 235, 208, 0) 100%)',
             }}
           />
 
@@ -100,24 +65,22 @@ export default function ProfilePage() {
 
               {/* Info (44:543) */}
               <div className="flex flex-col gap-[4px] min-w-0 flex-1">
-                <h2 className="text-[22px] font-extrabold text-[#1a1c19] tracking-[-0.48px] truncate">
+                <h2 className="text-[20px] font-extrabold text-[#1a1c19] tracking-[-0.48px] truncate">
                   {displayName}
                 </h2>
                 <div className="flex items-center gap-[6px] text-[#424843]">
-                  <Call
-                    size={16}
-                    color="#424843"
-                    variant="Linear"
-                    className="shrink-0"
-                  />
-                  <span className="text-[15px] font-normal tracking-tight">
-                    {phoneNumber}
+                  <Call size={15} color="#424843" variant="Linear" className="shrink-0" />
+                  <span className="text-[14px] font-medium tracking-tight">
+                    {userPhone || '+251 911 234 567'}
                   </span>
                 </div>
+                <span className="text-[11px] text-[#74a156] font-semibold">
+                  {t.profile.telegramUser}
+                </span>
               </div>
             </div>
 
-            {/* Edit Phone Input Modal/Drawer State */}
+            {/* Edit Phone Input */}
             {isEditingPhone ? (
               <div className="w-full flex flex-col gap-2 pt-2 border-t border-stone-200/70">
                 <input
@@ -130,71 +93,144 @@ export default function ProfilePage() {
                 <div className="flex gap-2">
                   <button
                     onClick={handleUpdatePhone}
-                    className="flex-1 bg-[#74a156] text-white rounded-full py-2 text-xs font-semibold"
+                    className="flex-1 bg-[#74a156] text-white text-xs font-bold py-2 rounded-lg cursor-pointer"
                   >
-                    Save
+                    {t.common.save}
                   </button>
                   <button
                     onClick={() => setIsEditingPhone(false)}
-                    className="px-4 border border-stone-300 rounded-full py-2 text-xs text-stone-600"
+                    className="px-3 bg-stone-200 text-stone-700 text-xs font-semibold py-2 rounded-lg cursor-pointer"
                   >
-                    Cancel
+                    {t.common.cancel}
                   </button>
                 </div>
               </div>
             ) : (
-              /* Action Buttons (44:537) */
-              <div className="flex gap-[12px] items-center justify-center pt-[10px] w-full">
-                <button
-                  onClick={() => alert(`Customer: ${displayName}`)}
-                  className="bg-[#74a156] hover:bg-[#669049] active:scale-95 transition-all text-white rounded-full px-[24px] py-[8.5px] text-[15px] font-normal shadow-[0px_1px_1px_rgba(0,0,0,0.05)] flex-1 text-center"
-                >
-                  Edit Profile
-                </button>
-
-                <button
-                  onClick={() => setIsEditingPhone(true)}
-                  className="border border-[#74a156] hover:bg-[#74a156]/10 active:scale-95 transition-all text-[#74a156] rounded-full px-[22px] py-[8.5px] text-[15px] font-normal flex-1 text-center"
-                >
-                  Update Number
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setPhoneInput(userPhone);
+                  setIsEditingPhone(true);
+                }}
+                className="w-full bg-[#f2f4f2] hover:bg-[#e4e6e4] text-[#1a1c19] text-[12px] font-bold py-2 rounded-[8px] transition-all cursor-pointer"
+              >
+                {t.profile.editPhone}
+              </button>
             )}
           </div>
         </div>
 
-        {/* Settings Links Layout (44:545) */}
-        <div className="flex flex-col gap-[10px] w-full">
-          {menuLinks.map((link) => (
+        {/* Language Selection Card */}
+        <div className="bg-white border border-[rgba(194,200,192,0.25)] rounded-[12px] p-[16px] shadow-2xs w-full flex flex-col gap-[10px]">
+          <div className="flex items-center gap-[8px]">
+            <Translate size={20} color="#74a156" variant="Bold" />
+            <h3 className="text-[14px] font-bold text-[#1a1c19]">
+              {t.profile.language}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
             <button
-              key={link.id}
-              onClick={link.onClick}
-              className="bg-white border border-[rgba(194,200,192,0.2)] rounded-[12px] shadow-[0px_2px_4px_rgba(0,0,0,0.04)] hover:border-[#74a156]/40 active:scale-[0.99] transition-all flex items-center justify-between px-[16px] py-[10px] w-full text-left"
+              onClick={() => setLanguage('en')}
+              className={cn(
+                'flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer',
+                language === 'en'
+                  ? 'border-[#74a156] bg-emerald-50 text-[#74a156] font-bold shadow-2xs'
+                  : 'border-stone-200 hover:bg-stone-50 text-stone-700 font-medium'
+              )}
             >
-              <div className="flex items-center gap-[14px]">
-                {/* Icon Circle (44:548) */}
-                <div className="bg-[#edeee8] size-[40px] rounded-full flex items-center justify-center shrink-0">
-                  {link.icon}
-                </div>
-
-                {/* Text (44:551) */}
-                <div className="flex flex-col gap-[1px]">
-                  <span className="text-[17px] font-bold text-[#1a1c19] leading-[22px]">
-                    {link.title}
-                  </span>
-                  <span className="text-[13px] font-normal text-[#424843] leading-[18px]">
-                    {link.subtitle}
-                  </span>
-                </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold">English (US)</span>
+                <span className="text-[10px] text-stone-500">Default</span>
               </div>
-
-              {/* Chevron Right (44:556) */}
-              <div className="shrink-0 pl-2">
-                <ArrowRight2 size={16} color="#868685" variant="Linear" />
-              </div>
+              {language === 'en' && (
+                <TickCircle size={16} color="#74a156" variant="Bold" />
+              )}
             </button>
-          ))}
+
+            <button
+              onClick={() => setLanguage('am')}
+              className={cn(
+                'flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer',
+                language === 'am'
+                  ? 'border-[#74a156] bg-emerald-50 text-[#74a156] font-bold shadow-2xs'
+                  : 'border-stone-200 hover:bg-stone-50 text-stone-700 font-medium'
+              )}
+            >
+              <div className="flex flex-col">
+                <span className="text-xs font-bold">አማርኛ</span>
+                <span className="text-[10px] text-stone-500">Amharic</span>
+              </div>
+              {language === 'am' && (
+                <TickCircle size={16} color="#74a156" variant="Bold" />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Menu Options List */}
+        <div className="bg-white border border-[rgba(194,200,192,0.25)] rounded-[12px] overflow-hidden shadow-2xs w-full flex flex-col divide-y divide-stone-100">
+          {/* Pickup Info */}
+          <div className="flex items-center justify-between p-[14px] hover:bg-stone-50 transition-colors">
+            <div className="flex items-center gap-[12px]">
+              <div className="size-[36px] rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                <Location size={18} color="#1a1c19" variant="Linear" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[13px] font-bold text-[#1a1c19]">
+                  {t.profile.pickupInfoTitle}
+                </span>
+                <span className="text-[11px] text-[#868685]">
+                  {APP_CONFIG.defaultPickupLocation}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Support */}
+          <a
+            href={`https://t.me/${APP_CONFIG.supportTelegram.replace('@', '')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-[14px] hover:bg-stone-50 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-[12px]">
+              <div className="size-[36px] rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                <Headphone size={18} color="#1a1c19" variant="Linear" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[13px] font-bold text-[#1a1c19]">
+                  {t.profile.support}
+                </span>
+                <span className="text-[11px] text-[#868685]">
+                  {APP_CONFIG.supportTelegram}
+                </span>
+              </div>
+            </div>
+            <ArrowRight2 size={16} color="#868685" />
+          </a>
+
+          {/* Terms */}
+          <div className="flex items-center justify-between p-[14px] hover:bg-stone-50 transition-colors">
+            <div className="flex items-center gap-[12px]">
+              <div className="size-[36px] rounded-full bg-stone-100 flex items-center justify-center shrink-0">
+                <DocumentText size={18} color="#1a1c19" variant="Linear" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[13px] font-bold text-[#1a1c19]">
+                  {t.profile.terms}
+                </span>
+                <span className="text-[11px] text-[#868685]">
+                  Ambo Farm Kircha Rules & Policies
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Version */}
+        <p className="text-[11px] text-[#868685] text-center pt-2">
+          {t.profile.appVersion}
+        </p>
       </div>
     </div>
   );

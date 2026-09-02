@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   ArrowLeft2,
   Trash,
@@ -13,13 +13,14 @@ import {
   Location,
   CardTick,
   TickCircle,
-} from "iconsax-react";
-import { useAppStore } from "@/store/useAppStore";
-import { formatETB } from "@/lib/utils";
-import { APP_CONFIG } from "@/lib/constants";
+} from 'iconsax-react';
+import { useAppStore, useI18n } from '@/store/useAppStore';
+import { formatETB } from '@/lib/utils';
+import { APP_CONFIG } from '@/lib/constants';
 
 export default function ShopCartPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const {
     cartItems,
     updateCartQuantity,
@@ -48,15 +49,15 @@ export default function ShopCartPage() {
         </button>
 
         <h1 className="font-semibold text-[#111827] text-[20px] text-center tracking-[-0.33px]">
-          የግዢ ቅርጫት
+          {t.shop.cartTitle}
         </h1>
 
         {cartItems.length > 0 ? (
           <button
             onClick={clearCart}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1"
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 px-2 py-1 cursor-pointer"
           >
-            Clear
+            {t.common.clear}
           </button>
         ) : (
           <div className="w-[40px]" />
@@ -72,16 +73,15 @@ export default function ShopCartPage() {
             </div>
             <div>
               <h3 className="font-bold text-stone-900 text-base">
-                Your cart is empty
+                {t.shop.emptyCartTitle}
               </h3>
-              <p className="text-xs text-stone-500 mt-1 max-w-[220px]">
-                Explore fresh dairy, eggs, and poultry products produced at our
-                Ambo farm.
+              <p className="text-xs text-stone-500 mt-1 max-w-[240px]">
+                {t.shop.emptyCartDesc}
               </p>
             </div>
             <Link href="/shop" className="pt-2 w-full">
               <button className="w-full bg-[#74a156] hover:bg-[#669049] active:scale-95 text-white font-bold py-3 rounded-xl text-xs transition-all shadow-xs cursor-pointer">
-                Browse Farm Shop
+                {t.shop.browseShop}
               </button>
             </Link>
           </div>
@@ -97,7 +97,7 @@ export default function ShopCartPage() {
                   {/* Thumbnail Image */}
                   <div className="relative size-[64px] rounded-[8px] overflow-hidden bg-[#e2e3dd] shrink-0">
                     <Image
-                      src={product.images[0] || "/images/fresh_milk_yogurt.png"}
+                      src={product.images[0] || '/images/fresh_milk_yogurt.png'}
                       alt={product.name}
                       fill
                       className="object-cover mix-blend-multiply"
@@ -142,9 +142,7 @@ export default function ShopCartPage() {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        updateCartQuantity(product.id, quantity + 1)
-                      }
+                      onClick={() => updateCartQuantity(product.id, quantity + 1)}
                       className="size-[26px] flex items-center justify-center rounded-[6px] bg-white hover:bg-stone-100 text-stone-700 shadow-2xs cursor-pointer active:scale-90"
                       aria-label="Increase quantity"
                     >
@@ -162,7 +160,7 @@ export default function ShopCartPage() {
               </div>
               <div className="flex flex-col">
                 <span className="text-[11px] font-medium text-[#868685]">
-                  Designated Pickup Spot
+                  {t.shop.pickupSpot}
                 </span>
                 <span className="text-[13px] font-semibold text-[#1a1c19]">
                   {APP_CONFIG.defaultPickupLocation}
@@ -173,22 +171,18 @@ export default function ShopCartPage() {
             {/* Order Total & Payment Summary Card */}
             <div className="bg-[#f3f4ee] border border-[rgba(194,200,192,0.4)] rounded-[12px] p-[14px] flex flex-col gap-[8px] shadow-2xs">
               <div className="flex justify-between items-center text-[13px] text-[#424843]">
-                <span>Items Subtotal:</span>
-                <span className="font-semibold text-[#1a1c19]">
-                  {formatETB(totalAmountETB)}
-                </span>
+                <span>{t.shop.itemsSubtotal}</span>
+                <span className="font-semibold text-[#1a1c19]">{formatETB(totalAmountETB)}</span>
               </div>
               <div className="flex justify-between items-center text-[13px] text-[#424843]">
-                <span>Pickup Fee:</span>
-                <span className="font-semibold text-[#74a156]">FREE</span>
+                <span>{t.shop.pickupFee}</span>
+                <span className="font-semibold text-[#74a156]">{t.common.free}</span>
               </div>
 
               <div className="h-px bg-[#c2c8c0] my-1" />
 
               <div className="flex justify-between items-center">
-                <span className="text-[15px] font-bold text-[#1a1c19]">
-                  Total Payment:
-                </span>
+                <span className="text-[15px] font-bold text-[#1a1c19]">{t.shop.totalPayment}</span>
                 <span className="text-[18px] font-extrabold text-[#163422]">
                   {formatETB(totalAmountETB)}
                 </span>
@@ -201,7 +195,7 @@ export default function ShopCartPage() {
               className="w-full bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white font-bold py-[16px] rounded-[12px] text-[16px] flex items-center justify-center gap-2 shadow-sm drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] cursor-pointer mt-1"
             >
               <CardTick size={18} color="#ffffff" variant="Bold" />
-              <span>Pay Full Amount with Chapa</span>
+              <span>{t.shop.payWithChapa}</span>
             </button>
           </div>
         )}
@@ -216,24 +210,19 @@ export default function ShopCartPage() {
             </div>
             <div>
               <h3 className="text-base font-bold text-stone-900">
-                Order Placed Successfully!
+                {t.shop.orderSuccessTitle}
               </h3>
               <p className="text-xs text-stone-500 mt-1">
-                Your shop order is confirmed for collection at{" "}
-                <strong>{APP_CONFIG.defaultPickupLocation}</strong>.
+                {t.shop.orderSuccessMsg}
               </p>
               <div className="bg-stone-50 rounded-xl p-3 mt-3 text-xs space-y-1 text-left border border-stone-200">
                 <div className="flex justify-between">
                   <span>Paid Total:</span>
-                  <strong className="text-emerald-700">
-                    {formatETB(totalAmountETB)}
-                  </strong>
+                  <strong className="text-emerald-700">{formatETB(totalAmountETB)}</strong>
                 </div>
                 <div className="flex justify-between text-stone-500">
                   <span>Status:</span>
-                  <span className="font-semibold text-amber-600">
-                    READY FOR PICKUP
-                  </span>
+                  <span className="font-semibold text-amber-600">{t.orders.statusReady}</span>
                 </div>
               </div>
             </div>
@@ -243,21 +232,21 @@ export default function ShopCartPage() {
                 onClick={() => {
                   clearCart();
                   setIsSuccessModalOpen(false);
-                  router.push("/orders");
+                  router.push('/orders');
                 }}
-                className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold"
+                className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer"
               >
-                View in Orders
+                {t.kircha.viewInOrders}
               </button>
               <button
                 onClick={() => {
                   clearCart();
                   setIsSuccessModalOpen(false);
-                  router.push("/shop");
+                  router.push('/shop');
                 }}
-                className="px-4 border border-stone-300 py-2.5 rounded-xl text-xs text-stone-600"
+                className="px-4 border border-stone-300 py-2.5 rounded-xl text-xs text-stone-600 cursor-pointer"
               >
-                Back to Shop
+                {t.common.back}
               </button>
             </div>
           </div>

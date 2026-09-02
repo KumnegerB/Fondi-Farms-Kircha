@@ -1,39 +1,44 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { TelegramUser, TelegramWebApp } from "@/types/telegram";
+import { useEffect, useState } from 'react';
+import { TelegramUser, TelegramWebApp } from '@/types/telegram';
 
 export function useTelegram() {
-  const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
-  const [user, setUser] = useState<TelegramUser | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [webApp] = useState<TelegramWebApp | null>(() => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      return window.Telegram.WebApp;
+    }
+    return null;
+  });
+
+  const [user] = useState<TelegramUser | null>(() => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      return window.Telegram.WebApp.initDataUnsafe.user;
+    }
+    return null;
+  });
+
+  const isReady = typeof window !== 'undefined' && !!window.Telegram?.WebApp;
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-      setWebApp(tg);
-      if (tg.initDataUnsafe?.user) {
-        setUser(tg.initDataUnsafe.user);
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      try {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+      } catch {
+        // ignore
       }
-      setIsReady(true);
     }
   }, []);
 
   const triggerHaptic = (
-    type:
-      | "light"
-      | "medium"
-      | "heavy"
-      | "selection"
-      | "success"
-      | "error" = "light",
+    type: 'light' | 'medium' | 'heavy' | 'selection' | 'success' | 'error' = 'light'
   ) => {
     if (!webApp?.HapticFeedback) return;
-    if (type === "selection") {
+    if (type === 'selection') {
       webApp.HapticFeedback.selectionChanged();
-    } else if (type === "success" || type === "error") {
+    } else if (type === 'success' || type === 'error') {
       webApp.HapticFeedback.notificationOccurred(type);
     } else {
       webApp.HapticFeedback.impactOccurred(type);
@@ -44,7 +49,7 @@ export function useTelegram() {
     webApp,
     user,
     isReady,
-    initData: webApp?.initData || "",
+    initData: webApp?.initData || '',
     triggerHaptic,
   };
 }
