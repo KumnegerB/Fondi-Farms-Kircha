@@ -9,6 +9,17 @@ export interface TelegramUser {
   photo_url?: string;
 }
 
+export interface TelegramContactResponse {
+  responseUnsafe?: {
+    contact?: {
+      phone_number?: string;
+      first_name?: string;
+      last_name?: string;
+      user_id?: number;
+    };
+  };
+}
+
 export interface TelegramWebApp {
   initData: string;
   initDataUnsafe: {
@@ -20,7 +31,7 @@ export interface TelegramWebApp {
   };
   version: string;
   platform: string;
-  colorScheme: "light" | "dark";
+  colorScheme: 'light' | 'dark';
   themeParams: {
     bg_color?: string;
     text_color?: string;
@@ -61,9 +72,9 @@ export interface TelegramWebApp {
   };
   HapticFeedback: {
     impactOccurred: (
-      style: "light" | "medium" | "heavy" | "rigid" | "soft",
+      style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'
     ) => void;
-    notificationOccurred: (type: "error" | "success" | "warning") => void;
+    notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
     selectionChanged: () => void;
   };
   openLink: (url: string, options?: { try_instant_view?: boolean }) => void;
@@ -74,7 +85,9 @@ export interface TelegramWebApp {
   ready: () => void;
   setHeaderColor: (color: string) => void;
   setBackgroundColor: (color: string) => void;
-  requestContact?: (callback?: (shared: boolean) => void) => void;
+  requestContact?: (
+    callback: (granted: boolean, response?: TelegramContactResponse) => void
+  ) => void;
 }
 
 declare global {

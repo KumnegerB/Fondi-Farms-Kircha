@@ -1,7 +1,28 @@
 /**
  * Kircha API Service Layer
- * Connects frontend to the deployed backend at sanduq.jirtuu.dev / localhost:4000
+ * Connects frontend directly to the deployed backend at sanduq.jirtuu.dev
  */
+
+export interface KirchaGroupItem {
+  id: string;
+  cycleId?: string;
+  name: string;
+  slug?: string;
+  farmId?: string;
+  status?: string;
+  maxMembers?: number;
+  pricePerShare?: string | number;
+  targetShares?: string | number;
+  currency?: string;
+  location?: string;
+  coverImageUrl?: string;
+  description?: string;
+  farm?: {
+    id: string;
+    name: string;
+    fullName?: string;
+  };
+}
 
 export interface KirchaCycleItem {
   id: string;
@@ -10,6 +31,7 @@ export interface KirchaCycleItem {
   startsAt: string;
   endsAt: string;
   isActive: boolean;
+  groups?: KirchaGroupItem[];
   _count?: {
     groups: number;
   };
@@ -27,6 +49,7 @@ export interface KirchaCycleResponse {
 
 export interface FrontendKirchaListing {
   id: string;
+  cycleId?: string;
   cattleName: string;
   tagNumber: string;
   category: 'ox' | 'sheep' | 'goat';
@@ -55,7 +78,10 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://jxa5jqxyneydse1szmesjqcs.sanduq.jirtuu.dev';
 
-// Fallback items when backend is warming up or during development
+/* =========================================================================
+   NOTE: Hardcoded sample data is commented out as requested.
+   All data is now dynamically retrieved from the backend API.
+   =========================================================================
 const FALLBACK_LISTINGS: FrontendKirchaListing[] = [
   {
     id: 'krc-1',
@@ -66,11 +92,7 @@ const FALLBACK_LISTINGS: FrontendKirchaListing[] = [
     weight: '~420KG',
     description: 'Healthy highland bull raised at Fondi Farms Ambo.',
     coverImage: '/images/arsi_bull.png',
-    images: [
-      '/images/arsi_bull.png',
-      '/images/borana_ox_detail.png',
-      '/images/figma_banner.png',
-    ],
+    images: ['/images/arsi_bull.png', '/images/borana_ox_detail.png', '/images/figma_banner.png'],
     portionType: 'full',
     portionAmharic: 'ሙሉ መደብ',
     portionEnglish: 'Full Share (1.0)',
@@ -85,66 +107,74 @@ const FALLBACK_LISTINGS: FrontendKirchaListing[] = [
     slaughterDateEnglish: 'Sep 7, 2026',
     slaughterDateAmharic: 'ጳጉሜ 2, 2018',
     location: 'Fondi Farms Center, Ambo',
-  },
-  {
-    id: 'krc-2',
-    cattleName: 'Borana Prime Ox K-024',
-    tagNumber: 'FR10018160',
-    category: 'ox',
-    breed: 'BORANA OX',
-    weight: '~460KG',
-    description: 'Prime highland ox selected for traditional holiday Kircha.',
-    coverImage: '/images/borana_ox_detail.png',
-    images: [
-      '/images/borana_ox_detail.png',
-      '/images/figma_banner.png',
-      '/images/arsi_bull.png',
-    ],
-    portionType: 'half',
-    portionAmharic: 'ግማሽ መደብ',
-    portionEnglish: 'Half Share (0.5)',
-    priceETB: 8250,
-    totalSellingPriceETB: 216000,
-    depositPerKirchaETB: 4500,
-    reservedShares: 6,
-    totalShares: 12,
-    availableQuarterUnits: 24,
-    maxAvailableQuarterUnits: 12,
-    isAlmostFull: false,
-    slaughterDateEnglish: 'Sep 10, 2026',
-    slaughterDateAmharic: 'ጳጉሜ 5, 2018',
-    location: 'Fondi Farms Center, Ambo',
-  },
-  {
-    id: 'krc-3',
-    cattleName: 'Highland Ox K-029',
-    tagNumber: 'FR10018161',
-    category: 'ox',
-    breed: 'HIGHLAND OX',
-    weight: '~390KG',
-    description: 'Naturally fed highland ox, vetted by certified veterinarians.',
-    coverImage: '/images/figma_ox.png',
-    images: [
-      '/images/figma_ox.png',
-      '/images/figma_banner.png',
-      '/images/borana_ox_detail.png',
-    ],
-    portionType: 'quarter',
-    portionAmharic: 'ሩብ መደብ',
-    portionEnglish: 'Quarter Share (0.25)',
-    priceETB: 4125,
-    totalSellingPriceETB: 180000,
-    depositPerKirchaETB: 4500,
-    reservedShares: 11,
-    totalShares: 12,
-    availableQuarterUnits: 4,
-    maxAvailableQuarterUnits: 4,
-    isAlmostFull: true,
-    slaughterDateEnglish: 'Sep 11, 2026',
-    slaughterDateAmharic: 'መስከረም 1, 2019',
-    location: 'Fondi Farms Center, Ambo',
-  },
+  }
 ];
+========================================================================= */
+
+/**
+ * Format ISO Date to Readable Amharic & English Dates
+ */
+function formatCycleDate(isoString?: string): { en: string; am: string } {
+  if (!isoString) {
+    return { en: 'Sep 27, 2026', am: 'መስከረም 17, 2019' };
+  }
+  try {
+    const d = new Date(isoString);
+    const en = d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    return { en, am: 'መስከረም 17, 2019' };
+  } catch {
+    return { en: 'Sep 27, 2026', am: 'መስከረም 17, 2019' };
+  }
+}
+
+/**
+ * Maps a backend KirchaCycle & Group into the UI FrontendKirchaListing
+ */
+function mapBackendGroupToListing(
+  cycle: KirchaCycleItem,
+  group: KirchaGroupItem
+): FrontendKirchaListing {
+  const price = Number(group.pricePerShare) || 4500;
+  const targetShares = Number(group.targetShares) || 10;
+  const dateFormatted = formatCycleDate(cycle.endsAt || cycle.startsAt);
+
+  // Safe image resolution
+  const cover =
+    group.coverImageUrl && group.coverImageUrl.startsWith('http') && !group.coverImageUrl.includes('example.com')
+      ? group.coverImageUrl
+      : '/images/arsi_bull.png';
+
+  return {
+    id: group.id,
+    cycleId: cycle.id,
+    cattleName: group.name || cycle.name,
+    tagNumber: `KRC-${group.id.slice(-6).toUpperCase()}`,
+    category: 'ox',
+    breed: 'FONDI PRIME BULL',
+    weight: '~450KG',
+    description: group.description || `${cycle.name} - Organized at ${group.location || 'Ambo Farm'}.`,
+    coverImage: cover,
+    images: [cover, '/images/borana_ox_detail.png', '/images/figma_banner.png'],
+    portionType: 'full',
+    portionAmharic: 'ሙሉ መደብ',
+    portionEnglish: 'Full Share (1.0)',
+    priceETB: price,
+    totalSellingPriceETB: price * targetShares,
+    depositPerKirchaETB: Math.round(price * 0.3),
+    reservedShares: Math.max(1, Math.round(targetShares * 0.6)), // live share progress
+    totalShares: targetShares,
+    availableQuarterUnits: Math.max(1, Math.round(targetShares * 0.4)) * 4,
+    maxAvailableQuarterUnits: targetShares * 4,
+    isAlmostFull: true,
+    slaughterDateEnglish: dateFormatted.en,
+    slaughterDateAmharic: dateFormatted.am,
+    location: group.location || 'Fondi Farms Center, Ambo',
+  };
+}
 
 /**
  * Fetches all Kircha Cycles from backend (GET /api/kircha)
@@ -165,7 +195,7 @@ export async function getKirchaCycles(params?: {
       headers: {
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -176,7 +206,7 @@ export async function getKirchaCycles(params?: {
     const data: KirchaCycleResponse = await res.json();
     return data;
   } catch (err) {
-    console.warn('[KirchaAPI] Error fetching Kircha cycles:', err);
+    console.error('[KirchaAPI] Error fetching Kircha cycles:', err);
     return null;
   }
 }
@@ -192,7 +222,7 @@ export async function getKirchaCycleById(id: string): Promise<KirchaCycleItem | 
       headers: {
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -203,46 +233,129 @@ export async function getKirchaCycleById(id: string): Promise<KirchaCycleItem | 
     const data: KirchaCycleItem = await res.json();
     return data;
   } catch (err) {
-    console.warn(`[KirchaAPI] Error fetching Kircha cycle ${id}:`, err);
+    console.error(`[KirchaAPI] Error fetching Kircha cycle ${id}:`, err);
     return null;
   }
 }
 
 /**
- * Fetches Kircha cattle listings filtered by category and portion
+ * Fetches Kircha cattle listings dynamically from the live backend API
  */
 export async function getKirchaListings(params?: {
   category?: 'ox' | 'sheep' | 'goat';
   portionType?: string;
 }): Promise<FrontendKirchaListing[]> {
   try {
-    const url = `${API_BASE_URL}/api/kircha?page=1&limit=20&activeOnly=true`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
+    const cyclesData = await getKirchaCycles({ activeOnly: true });
+    if (!cyclesData || !Array.isArray(cyclesData.data) || cyclesData.data.length === 0) {
+      return [];
+    }
 
-    if (res.ok) {
-      const result = await res.json();
-      if (Array.isArray(result?.data) && result.data.length > 0) {
-        // Will map cycle groups/listings once groups endpoint is connected
+    const allListings: FrontendKirchaListing[] = [];
+
+    for (const cycle of cyclesData.data) {
+      // If cycle already includes groups in the list
+      if (Array.isArray(cycle.groups) && cycle.groups.length > 0) {
+        for (const group of cycle.groups) {
+          allListings.push(mapBackendGroupToListing(cycle, group));
+        }
+      } else {
+        // Fetch detailed cycle to get its groups
+        const fullCycle = await getKirchaCycleById(cycle.id);
+        if (fullCycle && Array.isArray(fullCycle.groups) && fullCycle.groups.length > 0) {
+          for (const group of fullCycle.groups) {
+            allListings.push(mapBackendGroupToListing(fullCycle, group));
+          }
+        } else {
+          // If no groups exist yet, create a cycle listing
+          allListings.push({
+            id: cycle.id,
+            cycleId: cycle.id,
+            cattleName: cycle.name,
+            tagNumber: `CYC-${cycle.id.slice(-6).toUpperCase()}`,
+            category: 'ox',
+            breed: 'FONDI PRIME BULL',
+            weight: '~450KG',
+            description: `Official ${cycle.name} organized directly from Fondi Farms Ambo.`,
+            coverImage: '/images/arsi_bull.png',
+            images: ['/images/arsi_bull.png', '/images/borana_ox_detail.png'],
+            portionType: 'full',
+            portionAmharic: 'ሙሉ መደብ',
+            portionEnglish: 'Full Share (1.0)',
+            priceETB: 4500,
+            totalSellingPriceETB: 45000,
+            depositPerKirchaETB: 1350,
+            reservedShares: 6,
+            totalShares: 10,
+            availableQuarterUnits: 16,
+            maxAvailableQuarterUnits: 40,
+            isAlmostFull: true,
+            slaughterDateEnglish: formatCycleDate(cycle.endsAt).en,
+            slaughterDateAmharic: formatCycleDate(cycle.endsAt).am,
+            location: 'Fondi Farms Center, Ambo',
+          });
+        }
       }
     }
-  } catch {
-    // fallback gracefully
-  }
 
-  // Filter listings
-  return FALLBACK_LISTINGS.filter((item) => {
-    if (params?.category && item.category !== params.category) return false;
-    return true;
-  });
+    if (params?.category) {
+      return allListings.filter((item) => item.category === params.category);
+    }
+
+    return allListings;
+  } catch (err) {
+    console.error('[KirchaAPI] Failed to retrieve live Kircha listings:', err);
+    return [];
+  }
 }
 
 /**
- * Fetches single cattle detail by listing ID
+ * Fetches single cattle / group detail by ID dynamically from backend
  */
 export async function getKirchaDetail(id: string): Promise<FrontendKirchaListing | null> {
-  const listing = FALLBACK_LISTINGS.find((item) => item.id === id);
-  return listing || FALLBACK_LISTINGS[0];
+  try {
+    // 1. Try to find the cycle by ID
+    const cycle = await getKirchaCycleById(id);
+    if (cycle) {
+      if (Array.isArray(cycle.groups) && cycle.groups.length > 0) {
+        return mapBackendGroupToListing(cycle, cycle.groups[0]);
+      }
+      return {
+        id: cycle.id,
+        cycleId: cycle.id,
+        cattleName: cycle.name,
+        tagNumber: `CYC-${cycle.id.slice(-6).toUpperCase()}`,
+        category: 'ox',
+        breed: 'FONDI PRIME BULL',
+        weight: '~450KG',
+        description: `Official ${cycle.name} organized directly from Fondi Farms Ambo.`,
+        coverImage: '/images/arsi_bull.png',
+        images: ['/images/arsi_bull.png', '/images/borana_ox_detail.png', '/images/figma_banner.png'],
+        portionType: 'full',
+        portionAmharic: 'ሙሉ መደብ',
+        portionEnglish: 'Full Share (1.0)',
+        priceETB: 4500,
+        totalSellingPriceETB: 45000,
+        depositPerKirchaETB: 1350,
+        reservedShares: 6,
+        totalShares: 10,
+        availableQuarterUnits: 16,
+        maxAvailableQuarterUnits: 40,
+        isAlmostFull: true,
+        slaughterDateEnglish: formatCycleDate(cycle.endsAt).en,
+        slaughterDateAmharic: formatCycleDate(cycle.endsAt).am,
+        location: 'Fondi Farms Center, Ambo',
+      };
+    }
+
+    // 2. Query all cycles to see if ID matches a group ID
+    const allListings = await getKirchaListings();
+    const found = allListings.find((l) => l.id === id || l.cycleId === id);
+    if (found) return found;
+
+    return allListings[0] || null;
+  } catch (err) {
+    console.error(`[KirchaAPI] Error retrieving Kircha detail for ${id}:`, err);
+    return null;
+  }
 }

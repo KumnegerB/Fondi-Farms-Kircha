@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   User,
   Call,
@@ -208,6 +209,38 @@ export default function ProfilePage() {
             </div>
             <ArrowRight2 size={16} color="#868685" />
           </a>
+
+          {/* Telegram Account / Login Link */}
+          <Link
+            href="/login"
+            className="flex items-center justify-between p-[14px] hover:bg-stone-50 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-[12px]">
+              <div className="size-[36px] rounded-full bg-[#24A1DE]/15 flex items-center justify-center shrink-0">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.64 8.8C16.49 10.38 15.84 14.23 15.51 16.01C15.37 16.76 15.09 17.01 14.83 17.04C14.25 17.09 13.81 16.66 13.25 16.29C12.37 15.71 11.87 15.35 11.02 14.79C10.03 14.14 10.68 13.78 11.23 13.2C11.38 13.05 13.88 10.77 13.93 10.56C13.94 10.53 13.94 10.43 13.88 10.37C13.82 10.31 13.73 10.34 13.66 10.35C13.56 10.37 12.02 11.39 9.05 13.4C8.61 13.7 8.22 13.85 7.86 13.84C7.47 13.83 6.72 13.62 6.16 13.44C5.47 13.22 4.93 13.1 4.98 12.72C5.01 12.52 5.28 12.32 5.81 12.11C9.07 10.69 11.25 9.77 12.34 9.32C15.46 8.02 16.11 7.8 16.53 7.8C16.62 7.8 16.83 7.82 16.96 7.93C17.07 8.02 17.1 8.15 17.11 8.25C17.11 8.33 17.13 8.56 16.64 8.8Z"
+                    fill="#24A1DE"
+                  />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[13px] font-bold text-[#1a1c19]">
+                  {t.auth.loginWithTelegram}
+                </span>
+                <span className="text-[11px] text-[#868685]">
+                  {t.auth.changeAccount}
+                </span>
+              </div>
+            </div>
+            <ArrowRight2 size={16} color="#868685" />
+          </Link>
 
           {/* Terms */}
           <div className="flex items-center justify-between p-[14px] hover:bg-stone-50 transition-colors">

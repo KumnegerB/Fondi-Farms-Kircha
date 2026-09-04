@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState, useMemo } from "react";
+import React, { use, useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft2,
@@ -10,7 +10,6 @@ import {
   Calendar,
   Location,
   ArrowRight2,
-  Gallery,
   TickCircle,
 } from "iconsax-react";
 import { formatETB, formatKirchaQuantity } from "@/lib/utils";
@@ -18,6 +17,7 @@ import { calculateKirchaPricing } from "@/lib/kircha";
 import { CattleImageSlider } from "@/components/tma/CattleImageSlider";
 import { PhotoLightbox } from "@/components/tma/PhotoLightbox";
 import { useI18n, useAppStore } from "@/store/useAppStore";
+import { getKirchaDetail, FrontendKirchaListing } from "@/lib/api/kircha";
 
 export default function KirchaDetailPage({
   params,
@@ -29,39 +29,82 @@ export default function KirchaDetailPage({
   const { t, language } = useI18n();
   const { addReservation } = useAppStore();
 
+  const [listing, setListing] = useState<FrontendKirchaListing | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // Selected quarter units (1 unit = 1/4 Kircha. 4 units = 1 full Kircha)
   const [selectedQuarterUnits, setSelectedQuarterUnits] = useState<number>(4);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState<boolean>(false);
   const [lightboxInitialIdx, setLightboxInitialIdx] = useState<number>(0);
 
-  // Listing configuration with multiple cattle photos
-  const listingData = useMemo(() => {
-    return {
-      id: id || "krc-1",
-      titleEnglish: "Full Share (1.0)",
-      titleAmharic: "ሙሉ መደብ",
-      cattleName: "Borana Prime Ox (K-024)",
-      tagNumber: "OX K-024",
-      breed: "BORANA OX",
-      weight: "~450KG",
-      description:
-        "Healthy prime highland ox raised at Fondi Farms Ambo. Graded A-1 for traditional Kircha celebration.",
-      images: [
-        "/images/borana_ox_detail.png",
-        "/images/figma_banner.png",
-        "/images/arsi_bull.png",
-        "/images/figma_ox.png",
-      ],
-      totalSellingPriceETB: 216000,
-      totalKirchaQuantity: 12,
-      pricePerKirchaETB: 18000,
-      depositPerKirchaETB: 4500, // 4,500 ETB deposit per 1 full Kircha
-      slaughterScheduleText: "Saturday, Sept 5 • 7:00 AM",
-      locationText: "Fondi Farms Center, Ambo",
-      maxAvailableQuarterUnits: 12,
+  useEffect(() => {
+    let isMounted = true;
+
+    getKirchaDetail(id)
+      .then((data) => {
+        if (isMounted) {
+          setListing(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching Kircha detail:", err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
     };
   }, [id]);
+
+  // Derived listing data
+  const listingData = useMemo(() => {
+    if (listing) {
+      return {
+        id: listing.id,
+        cattleName: listing.cattleName,
+        tagNumber: listing.tagNumber,
+        breed: listing.breed,
+        weight: listing.weight,
+        description: listing.description,
+        images:
+          listing.images.length > 0
+            ? listing.images
+            : ["/images/arsi_bull.png"],
+        totalSellingPriceETB: listing.totalSellingPriceETB || 45000,
+        totalKirchaQuantity: listing.totalShares || 10,
+        pricePerKirchaETB: listing.priceETB || 4500,
+        depositPerKirchaETB: listing.depositPerKirchaETB || 1350,
+        slaughterScheduleText:
+          language === "am"
+            ? listing.slaughterDateAmharic
+            : listing.slaughterDateEnglish,
+        locationText: listing.location,
+        maxAvailableQuarterUnits: listing.availableQuarterUnits || 16,
+      };
+    }
+
+    return {
+      id: id || "krc-1",
+      cattleName: "Meskel 2026 Kircha",
+      tagNumber: "KRC-001",
+      breed: "FONDI PRIME BULL",
+      weight: "~450KG",
+      description: "Healthy prime highland ox raised at Fondi Farms Ambo.",
+      images: ["/images/arsi_bull.png", "/images/borana_ox_detail.png"],
+      totalSellingPriceETB: 45000,
+      totalKirchaQuantity: 10,
+      pricePerKirchaETB: 4500,
+      depositPerKirchaETB: 1350,
+      slaughterScheduleText:
+        language === "am" ? "መስከረም 17, 2019" : "Sep 27, 2026",
+      locationText: "Fondi Farms Center, Ambo",
+      maxAvailableQuarterUnits: 16,
+    };
+  }, [listing, id, language]);
 
   // Pricing calculation
   const pricing = useMemo(() => {
@@ -98,7 +141,7 @@ export default function KirchaDetailPage({
       cattleId: listingData.id,
       cattleName: listingData.cattleName,
       tagNumber: listingData.tagNumber,
-      cattleImage: listingData.images[0],
+      cattleImage: listingData.images[0] || "/images/arsi_bull.png",
       quarterUnits: selectedQuarterUnits,
       totalPriceETB: pricing.totalPriceETB,
       depositPaidETB: pricing.depositAmountETB,
@@ -107,96 +150,90 @@ export default function KirchaDetailPage({
       slaughterDate: listingData.slaughterScheduleText,
       reservedAt: new Date().toISOString(),
     });
+
     setIsSuccessModalOpen(true);
   };
 
-  const handleOpenPhotoViewer = (index: number = 0) => {
-    setLightboxInitialIdx(index);
-    setIsLightboxOpen(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="bg-[#f2f4f2] min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#74a156] border-t-transparent mb-3" />
+        <p className="text-xs text-stone-500 font-medium">
+          {language === "am"
+            ? "የቅርጫ ዝርዝር በማምጣት ላይ..."
+            : "Loading cattle details..."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#f2f4f2] min-h-screen pb-[220px] flex flex-col items-center">
-      {/* Hero Media Container with 5-Second Auto Slider (49:1441) */}
-      <div className="relative w-full max-w-[430px] h-[230px] overflow-hidden bg-stone-900 shrink-0">
+      {/* 1. Multi-Photo Swipable Auto-Slider Banner */}
+      <div className="w-full relative bg-stone-900 overflow-hidden">
         <CattleImageSlider
           images={listingData.images}
           alt={listingData.cattleName}
-          autoSlideInterval={5000}
-          aspectRatioClass="h-[230px]"
-          showControls={true}
-          onImageClick={handleOpenPhotoViewer}
+          onImageClick={(idx) => {
+            setLightboxInitialIdx(idx);
+            setIsLightboxOpen(true);
+          }}
         />
 
-        {/* Circular Floating Back Button (49:1443) */}
+        {/* Back Button */}
         <button
           onClick={() => router.back()}
-          className="absolute left-[18px] top-[18px] bg-white/90 hover:bg-white active:scale-95 transition-all size-[40px] rounded-full flex items-center justify-center shadow-md backdrop-blur-xs z-20 cursor-pointer"
-          aria-label="Back"
+          className="absolute top-[16px] left-[16px] z-20 bg-black/40 hover:bg-black/60 active:scale-95 transition-all text-white rounded-full size-[40px] flex items-center justify-center backdrop-blur-xs cursor-pointer shadow-md"
+          aria-label="Back to listings"
         >
-          <ArrowLeft2 size={18} color="#111827" variant="Linear" />
+          <ArrowLeft2 size={20} color="#ffffff" variant="Linear" />
         </button>
 
-        {/* View All Photos Badge Indicator */}
-        <button
-          onClick={() => handleOpenPhotoViewer(0)}
-          className="absolute right-[14px] top-[18px] bg-black/60 hover:bg-black/80 active:scale-95 text-white px-2.5 py-1 rounded-full text-xs font-semibold backdrop-blur-xs flex items-center gap-1.5 shadow-md z-20 cursor-pointer"
-        >
-          <Gallery size={14} color="#ffffff" variant="Linear" />
-          <span>
-            {listingData.images.length} {t.common.photos}
+        {/* 'Almost Full' Alert Badge */}
+        <div className="absolute top-[16px] right-[16px] z-20 bg-white/95 backdrop-blur-xs px-[10px] py-[5px] rounded-[6px] flex items-center gap-[5px] shadow-sm">
+          <Flash size={14} color="#d32f2f" variant="Bold" />
+          <span className="text-[#d32f2f] text-[11px] font-bold leading-[14px]">
+            {t.kircha.almostFull}
           </span>
-        </button>
+        </div>
       </div>
 
-      {/* Main Content (49:1447) */}
-      <div className="w-full max-w-[430px] flex flex-col gap-[12px] items-start px-[16px] py-[12px]">
-        {/* Header Section (49:1448) */}
-        <div className="flex flex-col gap-[8px] w-full">
-          {/* Title & Base Price Row (49:1449) */}
+      {/* 2. Main Content Surface */}
+      <div className="w-full max-w-[430px] flex flex-col gap-[14px] items-center py-[14px] px-[16px]">
+        {/* Cattle Identity & Info */}
+        <div className="bg-white border border-[#e2e3dd] rounded-[12px] p-[16px] shadow-2xs w-full flex flex-col gap-[10px]">
+          {/* Header Row: Ox Title & Tag ID */}
           <div className="flex items-start justify-between w-full">
-            <h1 className="text-[22px] font-bold text-[#1a1c19] leading-[32px]">
-              {language === "am"
-                ? listingData.titleAmharic
-                : listingData.titleEnglish}
-            </h1>
-            <div className="flex items-baseline gap-[4px] text-[#28a745] tracking-[-0.22px]">
-              <span className="text-[22px] font-extrabold leading-[28px]">
-                {listingData.pricePerKirchaETB.toLocaleString()}
-              </span>
-              <span className="text-[12px] font-medium text-[#28a745]">
-                {t.kircha.perKircha}
+            <div className="flex flex-col gap-[2px]">
+              <h1 className="text-[20px] font-extrabold text-[#1a1c19] tracking-[-0.3px] leading-[26px]">
+                {listingData.cattleName}
+              </h1>
+              <span className="text-[12px] font-bold text-[#74a156] tracking-[0.5px]">
+                {listingData.tagNumber}
               </span>
             </div>
-          </div>
 
-          {/* Metadata Badges (49:1454) */}
-          <div className="flex gap-[8px] items-center h-[24px]">
-            <div className="bg-white px-[8px] py-[4px] rounded-[4px] flex items-center shadow-2xs border border-stone-200/50">
-              <span className="text-[12px] font-bold text-[#424843] tracking-[0.6px] uppercase">
-                {listingData.breed}
-              </span>
-            </div>
-            <div className="bg-white px-[8px] py-[4px] rounded-[4px] flex items-center shadow-2xs border border-stone-200/50">
-              <span className="text-[12px] font-bold text-[#424843] tracking-[0.6px] uppercase">
+            {/* Weight Pill */}
+            <div className="bg-[#f2f4f2] px-[10px] py-[4px] rounded-full">
+              <span className="text-[11px] font-bold text-[#424843]">
                 {listingData.weight}
               </span>
             </div>
           </div>
 
-          {/* Description (49:1459) */}
-          <p className="text-[14px] text-[#424843] leading-[20px] pt-1">
+          {/* Description */}
+          <p className="text-[13px] text-[#424843] leading-[20px] pt-1">
             {listingData.description}
           </p>
         </div>
 
-        {/* Purchase Configuration Section (49:1493) */}
+        {/* Purchase Configuration Section */}
         <div className="w-full border-t border-[#e2e3dd] pt-[12px] flex flex-col gap-[10px]">
-          <h2 className="text-[16px] font-bold text-[#1a1c19] leading-[22px]">
+          <h2 className="text-[15px] font-bold text-[#1a1c19] leading-[22px]">
             {t.kircha.selectShares}
           </h2>
 
-          {/* Unit Stepper (49:1496) */}
+          {/* Unit Stepper */}
           <div className="bg-white border border-[#c2c8c0] rounded-[12px] px-[9px] py-[8px] flex items-center justify-between shadow-2xs">
             {/* Decrement Button */}
             <button
@@ -230,74 +267,68 @@ export default function KirchaDetailPage({
               <Add size={18} color="#1a1c19" />
             </button>
           </div>
+        </div>
 
-          {/* Dynamic Pricing Breakdown Box (49:1508) */}
-          <div className="bg-[#f3f4ee] rounded-[12px] p-[14px] flex flex-col gap-[8px] shadow-2xs border border-[rgba(194,200,192,0.4)]">
-            {/* Total Price Row */}
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] text-[#424843]">
-                {t.kircha.totalSellingPrice} ({pricing.unitsDecimal} units)
-              </span>
-              <span className="text-[16px] font-bold text-[#1a1c19]">
-                {formatETB(pricing.totalPriceETB)}
-              </span>
-            </div>
+        {/* Breakdown Card */}
+        <div className="w-full bg-[#f3f4ee] border border-[rgba(194,200,192,0.4)] rounded-[12px] p-[14px] flex flex-col gap-[8px] shadow-2xs">
+          {/* 30% Deposit Due Now */}
+          <div className="flex justify-between items-center text-[13px]">
+            <span className="font-semibold text-[#1a1c19]">
+              {t.kircha.depositDueNow}:
+            </span>
+            <span className="font-bold text-[#74a156] text-[15px]">
+              {formatETB(pricing.depositAmountETB)}
+            </span>
+          </div>
 
-            {/* Required Deposit Row */}
-            <div className="flex items-center justify-between text-[#f57c00]">
-              <div className="flex items-center gap-[6px]">
-                <Flash size={15} color="#f57c00" variant="Bold" />
-                <span className="text-[13px] font-semibold">
-                  {t.kircha.depositDueNow}
-                </span>
-              </div>
-              <span className="text-[16px] font-extrabold">
-                {formatETB(pricing.depositAmountETB)}
-              </span>
-            </div>
+          {/* Full Price */}
+          <div className="flex justify-between items-center text-[12px] text-[#424843]">
+            <span>{t.kircha.totalSellingPrice}:</span>
+            <span className="font-semibold text-[#1a1c19]">
+              {formatETB(pricing.totalPriceETB)}
+            </span>
+          </div>
 
-            {/* Divider */}
-            <div className="h-px bg-[#c2c8c0] my-[2px]" />
+          <div className="h-px bg-[#c2c8c0] my-[2px]" />
 
-            {/* Remaining Balance Row */}
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] text-[#424843]">
-                {t.kircha.remainingAtPickup}
-              </span>
-              <span className="text-[16px] font-bold text-[#d32f2f]">
-                {formatETB(pricing.remainingBalanceETB)}
-              </span>
-            </div>
+          {/* Remaining Balance */}
+          <div className="flex justify-between items-center text-[12px] text-[#424843]">
+            <span>{t.kircha.remainingAtPickup}:</span>
+            <span className="font-semibold text-[#1a1c19]">
+              {formatETB(pricing.remainingBalanceETB)}
+            </span>
           </div>
         </div>
 
-        {/* Schedule & Location Details Section (49:1473) */}
-        <div className="flex flex-col gap-[8px] w-full pt-[8px]">
-          {/* Schedule Row (49:1474) */}
-          <div className="bg-white border border-[#e2e3dd] rounded-[12px] p-[12px] flex items-center gap-[12px] shadow-2xs w-full">
-            <div className="bg-[#eaf5ea] size-[40px] rounded-full flex items-center justify-center shrink-0">
-              <Calendar size={20} color="#74a156" variant="Linear" />
+        {/* Schedule & Pickup Info */}
+        <div className="w-full bg-white border border-[#e2e3dd] rounded-[12px] p-[14px] flex flex-col gap-[10px] shadow-2xs">
+          {/* Slaughter Schedule Row */}
+          <div className="flex items-center gap-[10px]">
+            <div className="size-[32px] rounded-full bg-[#f2f4f2] flex items-center justify-center shrink-0">
+              <Calendar size={16} color="#74a156" variant="Bold" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-[#424843]">
+              <span className="text-[11px] font-medium text-[#868685]">
                 {t.kircha.slaughterDate}
               </span>
-              <span className="text-[13px] font-semibold text-[#1a1c19]">
+              <span className="text-[13px] font-bold text-[#1a1c19]">
                 {listingData.slaughterScheduleText}
               </span>
             </div>
           </div>
 
-          {/* Location Row (49:1483) */}
-          <div className="bg-white border border-[#e2e3dd] rounded-[12px] p-[12px] flex items-center gap-[12px] shadow-2xs w-full">
-            <div className="bg-[#fed3c7] size-[40px] rounded-full flex items-center justify-center shrink-0">
-              <Location size={20} color="#d32f2f" variant="Bold" />
+          <div className="h-px bg-stone-100" />
+
+          {/* Pickup Spot Row */}
+          <div className="flex items-center gap-[10px]">
+            <div className="size-[32px] rounded-full bg-[#f2f4f2] flex items-center justify-center shrink-0">
+              <Location size={16} color="#d32f2f" variant="Bold" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-[#424843]">
+              <span className="text-[11px] font-medium text-[#868685]">
                 {t.kircha.pickupLocation}
               </span>
-              <span className="text-[13px] font-semibold text-[#1a1c19]">
+              <span className="text-[13px] font-bold text-[#1a1c19]">
                 {listingData.locationText}
               </span>
             </div>
@@ -305,33 +336,46 @@ export default function KirchaDetailPage({
         </div>
       </div>
 
-      {/* Fixed Bottom Action Bar (49:1529) */}
-      <div className="fixed bottom-[70px] left-0 right-0 max-w-[430px] mx-auto p-[14px] bg-[#f2f4f2]/95 backdrop-blur-xs z-40">
-        <button
-          onClick={handleReserve}
-          className="w-full bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white rounded-[12px] py-[16px] flex items-center justify-center gap-[8px] shadow-sm drop-shadow-[0px_1px_1px_rgba(0,0,0,0.05)] cursor-pointer"
-        >
-          <span className="text-[16px] font-bold">
-            {t.kircha.reserveWithDeposit}
-          </span>
-          <ArrowRight2 size={18} color="#ffffff" variant="Linear" />
-        </button>
+      {/* 3. Fixed Bottom Floating Reserve Action Bar */}
+      <div className="fixed bottom-[68px] left-0 right-0 z-30 flex justify-center w-full px-[14px] pointer-events-none">
+        <div className="w-full max-w-[430px] pointer-events-auto">
+          <div className="bg-white/95 backdrop-blur-md border border-[rgba(0,0,0,0.08)] shadow-[0px_4px_16px_rgba(0,0,0,0.12)] rounded-[14px] p-[12px] flex items-center justify-between gap-[12px]">
+            {/* Price & Deposit Summary */}
+            <div className="flex flex-col">
+              <span className="text-[11px] text-[#868685] font-medium leading-[14px]">
+                {t.kircha.depositDueNow}
+              </span>
+              <span className="text-[18px] font-extrabold text-[#74a156] leading-[22px]">
+                {formatETB(pricing.depositAmountETB)}
+              </span>
+            </div>
+
+            {/* Reserve CTA Button */}
+            <button
+              onClick={handleReserve}
+              className="flex-1 max-w-[200px] bg-[#74a156] hover:bg-[#669049] active:scale-[0.98] transition-all text-white font-bold py-[12px] px-[14px] rounded-[10px] text-[14px] flex items-center justify-center gap-[6px] shadow-sm cursor-pointer"
+            >
+              <span>{t.kircha.reserveWithDeposit}</span>
+              <ArrowRight2 size={16} color="#ffffff" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Fullscreen Photo Lightbox Modal */}
+      {/* 4. Fullscreen Photo Lightbox Modal */}
       <PhotoLightbox
-        isOpen={isLightboxOpen}
         images={listingData.images}
         initialIndex={lightboxInitialIdx}
-        title={`${listingData.cattleName} - ${listingData.tagNumber}`}
+        isOpen={isLightboxOpen}
         onClose={() => setIsLightboxOpen(false)}
+        title={listingData.cattleName}
       />
 
-      {/* Reservation Success Modal */}
+      {/* 5. Reservation Success Confirmation Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-xs w-full p-5 space-y-4 shadow-xl text-center">
-            <div className="w-12 h-12 bg-emerald-100 text-[#74a156] rounded-full flex items-center justify-center mx-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[16px] max-w-xs w-full p-5 space-y-4 shadow-xl text-center">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-[#74a156]">
               <TickCircle size={28} color="#74a156" variant="Bold" />
             </div>
             <div>
@@ -343,20 +387,14 @@ export default function KirchaDetailPage({
               </p>
               <div className="bg-stone-50 rounded-xl p-3 mt-3 text-xs space-y-1 text-left border border-stone-200">
                 <div className="flex justify-between">
-                  <span>Unit:</span>
-                  <strong>{pricing.fractionDisplay}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span>Deposit:</span>
+                  <span>{t.kircha.depositDueNow}:</span>
                   <strong className="text-emerald-700">
                     {formatETB(pricing.depositAmountETB)}
                   </strong>
                 </div>
                 <div className="flex justify-between text-stone-500">
-                  <span>Remainder:</span>
-                  <span className="font-semibold text-rose-600">
-                    {formatETB(pricing.remainingBalanceETB)}
-                  </span>
+                  <span>{t.kircha.remainingAtPickup}:</span>
+                  <span>{formatETB(pricing.remainingBalanceETB)}</span>
                 </div>
               </div>
             </div>
@@ -367,13 +405,13 @@ export default function KirchaDetailPage({
                   setIsSuccessModalOpen(false);
                   router.push("/orders");
                 }}
-                className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold"
+                className="flex-1 bg-[#74a156] text-white py-2.5 rounded-xl text-xs font-bold cursor-pointer hover:bg-[#669049] transition-all"
               >
                 {t.kircha.viewInOrders}
               </button>
               <button
                 onClick={() => setIsSuccessModalOpen(false)}
-                className="px-4 border border-stone-300 py-2.5 rounded-xl text-xs text-stone-600"
+                className="px-4 border border-stone-300 py-2.5 rounded-xl text-xs text-stone-600 cursor-pointer hover:bg-stone-50 transition-all"
               >
                 {t.common.close}
               </button>

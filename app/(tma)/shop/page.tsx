@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -12,141 +12,108 @@ import {
   ShoppingBag,
 } from "iconsax-react";
 import { useAppStore, useI18n } from "@/store/useAppStore";
-import { ShopProduct } from "@/types/shop";
 import { cn, formatETB } from "@/lib/utils";
+import { getProducts, FrontendProduct } from "@/lib/api/products";
 
 export default function ShopPage() {
   const router = useRouter();
   const { t } = useI18n();
-  const [activeCategory, setActiveCategory] = useState<
-    "all" | "dairy" | "eggs" | "poultry"
-  >("all");
+  const { addToCart, getCartCount, getCartTotal, authToken } = useAppStore();
+
+  const [products, setProducts] = useState<FrontendProduct[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [addedAnimationId, setAddedAnimationId] = useState<string | null>(null);
 
-  const { addToCart, getCartCount, getCartTotal } = useAppStore();
   const totalCartCount = getCartCount();
   const totalCartAmount = getCartTotal();
 
-  const shopProducts: ShopProduct[] = [
-    {
-      id: "shp-1",
-      name: "1L Milk & Yogurt",
-      description:
-        "Fresh pasteurized farm cow milk and creamy natural yogurt from Ambo highland farm.",
-      category: "dairy",
-      priceETB: 250,
-      unit: "liter",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 25,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "shp-2",
-      name: "Farm Fresh Eggs (Tray)",
-      description: "1 Tray of 30 fresh organic free-range farm eggs.",
-      category: "eggs",
-      priceETB: 720,
-      unit: "tray",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 40,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "shp-3",
-      name: "Eggs (Single Piece)",
-      description: "Fresh organic free-range farm egg.",
-      category: "eggs",
-      priceETB: 24,
-      unit: "piece",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 150,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "shp-4",
-      name: "Milk & Yogurt Family Kit",
-      description:
-        "Includes 2L pure whole milk + 1kg cultured yogurt + homemade farm butter.",
-      category: "dairy",
-      priceETB: 580,
-      unit: "package",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 15,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "shp-5",
-      name: "Whole Dressed Chicken",
-      description:
-        "Locally raised farm chicken, cleaned and ready for holiday cooking.",
-      category: "poultry",
-      priceETB: 850,
-      unit: "whole_chicken",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 18,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: "shp-6",
-      name: "Highland Farm Butter (500g)",
-      description: "Traditional Ethiopian spiced clarified highland butter.",
-      category: "dairy",
-      priceETB: 650,
-      unit: "kg",
-      images: ["/images/fresh_milk_yogurt.png"],
-      availableStock: 20,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
+  // Fetch live products from backend
+  useEffect(() => {
+    let isMounted = true;
 
+    getProducts({ token: authToken })
+      .then((data) => {
+        if (isMounted) {
+          setProducts(data);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching live products:", err);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authToken]);
+
+  // Dynamic category pills
   const categories = [
-    { id: "all", label: t.shop.all, count: shopProducts.length },
+    { id: "all", label: t.shop.all, count: products.length },
+    {
+      id: "honey",
+      label: "ማር (Honey)",
+      count: products.filter((p) => p.categorySlug === "honey").length,
+    },
+    {
+      id: "meat",
+      label: "ስጋ (Meat)",
+      count: products.filter((p) => p.categorySlug === "meat").length,
+    },
     {
       id: "dairy",
       label: t.shop.dairy,
-      count: shopProducts.filter((p) => p.category === "dairy").length,
+      count: products.filter((p) => p.categorySlug === "dairy").length,
     },
     {
       id: "eggs",
       label: t.shop.eggs,
-      count: shopProducts.filter((p) => p.category === "eggs").length,
+      count: products.filter((p) => p.categorySlug === "eggs").length,
     },
     {
       id: "poultry",
       label: t.shop.poultry,
-      count: shopProducts.filter((p) => p.category === "poultry").length,
+      count: products.filter((p) => p.categorySlug === "poultry").length,
     },
-  ];
+  ].filter((c) => c.id === "all" || c.count > 0 || products.length === 0);
 
-  const filteredProducts = shopProducts.filter((product) => {
+  const filteredProducts = products.filter((product) => {
     if (activeCategory === "all") return true;
-    return product.category === activeCategory;
+    return product.categorySlug === activeCategory;
   });
 
-  const handleAddProduct = (product: ShopProduct) => {
-    addToCart(product, 1);
+  const handleAddProduct = (product: FrontendProduct) => {
+    addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        category: product.shopCategory,
+        unit: product.shopUnit,
+        priceETB: product.priceETB,
+        availableStock: product.availableStock,
+        isActive: product.isAvailable,
+        images: product.images,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      1,
+    );
     setAddedAnimationId(product.id);
-    setTimeout(() => setAddedAnimationId(null), 1200);
+    setTimeout(() => {
+      setAddedAnimationId(null);
+    }, 1200);
   };
 
   return (
     <div className="bg-[#f2f4f2] min-h-screen pb-[180px] flex flex-col items-center">
-      {/* Sticky Header with Category Tabs */}
-      <div className="sticky top-0 z-40 w-full bg-white border-b border-[rgba(0,0,0,0.06)]">
-        {/* Top Header */}
-        <header className="w-full flex h-[68px] items-center justify-between px-[14px] py-[12px]">
+      {/* Top Header */}
+      <div className="sticky top-0 z-40 w-full bg-[#f2f4f2]/95 backdrop-blur-md flex flex-col items-center shadow-2xs">
+        <header className="bg-white w-full flex h-[68px] items-center justify-between px-[14px] py-[12px] border-b border-[rgba(0,0,0,0.06)]">
           <button
             onClick={() => router.back()}
             className="bg-[#f2f4f2] hover:bg-[#e6e8e6] active:scale-95 transition-all rounded-full size-[40px] flex items-center justify-center shrink-0 cursor-pointer"
@@ -174,16 +141,16 @@ export default function ShopPage() {
         </header>
 
         {/* Category Tabs Switcher */}
-        <div className="w-full px-[14px] pt-[8px] pb-[8px] bg-white">
-          <div className="w-full bg-[#f8fafc] border border-[rgba(226,232,240,0.7)] h-[44px] rounded-[12px] p-[5px] flex items-center justify-between shadow-2xs">
+        <div className="w-full max-w-[430px] px-[14px] pt-[8px] pb-[8px] overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-[6px] bg-[#f8fafc] border border-[rgba(226,232,240,0.7)] h-[44px] rounded-[12px] p-[5px] shadow-2xs min-w-max">
             {categories.map((c) => {
               const isActive = activeCategory === c.id;
               return (
                 <button
                   key={c.id}
-                  onClick={() => setActiveCategory(c.id as "all" | "dairy" | "eggs" | "poultry")}
+                  onClick={() => setActiveCategory(c.id)}
                   className={cn(
-                    "flex-1 h-full rounded-[9px] flex items-center justify-center gap-[4px] transition-all cursor-pointer px-1",
+                    "h-full rounded-[9px] flex items-center justify-center gap-[5px] transition-all cursor-pointer px-3",
                     isActive
                       ? "bg-[#74a156] shadow-[0px_1px_2px_rgba(0,0,0,0.08)]"
                       : "hover:bg-stone-200/50",
@@ -223,10 +190,22 @@ export default function ShopPage() {
 
       {/* Main Content Area */}
       <div className="w-full max-w-[430px] flex flex-col gap-[14px] items-center py-[6px] px-[14px]">
-        {/* Products Grid */}
-        <div className="grid grid-cols-2 gap-[12px] w-full pt-1">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => {
+        {/* Loading Spinner */}
+        {isLoading ? (
+          <div className="w-full flex flex-col gap-3 py-12 items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#74a156] border-t-transparent" />
+            <p className="text-xs text-stone-500">የእርሻ ምርቶችን በማምጣት ላይ...</p>
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="bg-white rounded-[12px] p-8 text-center w-full border border-stone-200 my-4">
+            <p className="text-[#62748e] text-[15px] font-medium">
+              በዚህ ምድብ ምንም ምርቶች አልተገኙም
+            </p>
+          </div>
+        ) : (
+          /* Products Grid */
+          <div className="grid grid-cols-2 gap-[12px] w-full pt-1">
+            {filteredProducts.map((product) => {
               const isJustAdded = addedAnimationId === product.id;
 
               return (
@@ -240,41 +219,40 @@ export default function ShopPage() {
                       src={product.images[0] || "/images/fresh_milk_yogurt.png"}
                       alt={product.name}
                       fill
-                      className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    {product.availableStock <= 20 && (
-                      <span className="absolute top-2 left-2 bg-[#74a156]/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                        {t.common.freshFarm}
-                      </span>
-                    )}
+
+                    {/* Stock pill */}
+                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm">
+                      {product.availableStock} {product.unit}
+                    </div>
                   </div>
 
-                  {/* Card Body */}
-                  <div className="p-[10px] flex-1 flex flex-col justify-between gap-[8px]">
+                  {/* Body Content Area */}
+                  <div className="p-[10px] flex flex-col justify-between flex-1 gap-1">
                     <div>
-                      <h3 className="text-[13px] font-bold text-[#1a1c19] leading-[18px] line-clamp-1">
+                      <h3 className="font-bold text-[13px] text-[#1a1c19] line-clamp-1">
                         {product.name}
                       </h3>
-                      <p className="text-[11px] text-[#868685] line-clamp-1 pt-0.5">
-                        {product.unit.replace("_", " ")} • {t.common.amboFarm}
+                      <p className="text-[11px] text-[#868685] line-clamp-1 mt-0.5">
+                        {product.description}
                       </p>
                     </div>
 
-                    {/* Price & Add Button Row */}
-                    <div className="flex items-center justify-between pt-1 border-t border-stone-100">
-                      <div className="flex items-baseline gap-[2px]">
-                        <span className="text-[15px] font-extrabold text-[#163422]">
-                          {product.priceETB.toLocaleString()}
+                    <div className="flex items-center justify-between pt-2 mt-auto border-t border-stone-100">
+                      <div className="flex flex-col">
+                        <span className="text-[13px] font-extrabold text-[#163422] leading-tight">
+                          {formatETB(product.priceETB)}
                         </span>
-                        <span className="text-[10px] font-bold text-[#163422]">
-                          {t.common.etb}
+                        <span className="text-[9px] text-[#868685] uppercase">
+                          / {product.unit}
                         </span>
                       </div>
 
                       <button
                         onClick={() => handleAddProduct(product)}
                         className={cn(
-                          "size-[30px] rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-xs active:scale-90",
+                          "size-[32px] rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90",
                           isJustAdded
                             ? "bg-emerald-600 text-white"
                             : "bg-[#74a156] hover:bg-[#669049] text-white",
@@ -295,41 +273,41 @@ export default function ShopPage() {
                   </div>
                 </div>
               );
-            })
-          ) : (
-            <div className="col-span-2 bg-white rounded-xl p-8 text-center text-stone-500 w-full text-xs border border-stone-200">
-              No products found in this category
-            </div>
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Floating Checkout Drawer Bar (When cart > 0) */}
+      {/* Floating Cart Bar */}
       {totalCartCount > 0 && (
-        <div className="fixed bottom-[74px] left-0 right-0 max-w-[430px] mx-auto px-[14px] z-40 animate-in slide-in-from-bottom duration-300">
-          <Link
-            href="/shop/cart"
-            className="w-full bg-[#1a1c19] hover:bg-black text-white p-[12px] rounded-[14px] flex items-center justify-between shadow-lg backdrop-blur-md transition-all active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-[10px]">
-              <div className="bg-[#74a156] size-[32px] rounded-full flex items-center justify-center text-white font-bold text-xs">
-                {totalCartCount}
+        <div className="fixed bottom-[68px] left-0 right-0 z-30 flex justify-center w-full px-[14px] pointer-events-none">
+          <div className="w-full max-w-[430px] pointer-events-auto">
+            <Link
+              href="/shop/cart"
+              className="bg-[#163422] hover:bg-[#0f2317] text-white p-3.5 rounded-xl shadow-lg flex items-center justify-between transition-all active:scale-[0.99] border border-emerald-900/40 block"
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative bg-[#74a156] p-2 rounded-lg text-white">
+                  <ShoppingBag size={20} color="#ffffff" variant="Bold" />
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[10px] font-bold size-5 rounded-full flex items-center justify-center border-2 border-[#163422]">
+                    {totalCartCount}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-200">
+                    {t.shop.viewCart}
+                  </span>
+                  <p className="text-sm font-extrabold text-white">
+                    {formatETB(totalCartAmount)}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-[12px] text-stone-300">
-                  {t.shop.totalCart}
-                </span>
-                <span className="text-[15px] font-bold text-white leading-tight">
-                  {formatETB(totalCartAmount)}
-                </span>
+              <div className="flex items-center gap-1 font-bold text-xs bg-white/10 px-3 py-1.5 rounded-lg">
+                <span>{t.shop.cartTitle}</span>
+                <span className="text-emerald-400">→</span>
               </div>
-            </div>
-
-            <div className="bg-[#74a156] px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 text-white">
-              <span>{t.shop.viewCart}</span>
-              <ShoppingBag size={14} color="#ffffff" variant="Bold" />
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
       )}
     </div>

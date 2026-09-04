@@ -3,33 +3,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useTelegram } from "@/hooks/useTelegram";
-import { useAppStore, useI18n } from "@/store/useAppStore";
 import {
-  PercentageCircle,
-  TickCircle,
   Add,
+  TickCircle,
+  BagHappy,
+  User,
+  Flash,
   ShieldTick,
-  Like1,
 } from "iconsax-react";
-import { cn } from "@/lib/utils";
+import { useAppStore, useI18n } from "@/store/useAppStore";
+import { useTelegram } from "@/hooks/useTelegram";
+import { formatETB } from "@/lib/utils";
+import { getProducts, FrontendProduct } from "@/lib/api/products";
 
 interface AnimalCategory {
   id: string;
   name: string;
   image: string;
   href: string;
-}
-
-import { ShopProductUnit } from "@/types/shop";
-
-interface ShopProductItem {
-  id: string;
-  name: string;
-  priceETB: number;
-  image: string;
-  unit: ShopProductUnit;
-  category: "dairy" | "eggs" | "poultry";
 }
 
 interface BannerSlide {
@@ -43,55 +34,61 @@ interface BannerSlide {
   href: string;
 }
 
-export default function TMAHomePage() {
-  const { user } = useTelegram();
-  const { addToCart, getCartCount } = useAppStore();
-  const { t } = useI18n();
+export default function HomePage() {
+  const { user: tgUser } = useTelegram();
+  const { t, language } = useI18n();
+  const { userName, addToCart, getCartCount, authToken } = useAppStore();
 
-  const displayName = user
-    ? `${user.first_name} ${user.last_name || ""}`.trim()
-    : "Mathias A.";
-
-  // Banner Carousel State with Touch / Swipe
   const [currentSlide, setCurrentSlide] = useState(0);
-  const bannerTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [liveProducts, setLiveProducts] = useState<FrontendProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState<boolean>(true);
+  const [addedProductId, setAddedProductId] = useState<string | null>(null);
+
+  // Swipe & Touch Refs
   const touchStartXRef = useRef<number | null>(null);
   const touchEndXRef = useRef<number | null>(null);
+  const bannerTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Dynamic Greeting Display Name
+  const displayName = tgUser?.first_name
+    ? `${tgUser.first_name} ${tgUser.last_name || ""}`.trim()
+    : userName || "Mathias A.";
+
+  // Carousel Banners matching Figma style
   const bannerSlides: BannerSlide[] = [
     {
       id: "slide-1",
       title: t.home.banner1Headline,
-      badge1Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
+      badge1Icon: <Flash size={10} color="#74a156" variant="Bold" />,
       badge1Text: t.home.banner1Badge1,
-      badge2Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
+      badge2Icon: <ShieldTick size={10} color="#74a156" variant="Bold" />,
       badge2Text: t.home.banner1Badge2,
-      image: "/images/figma_banner.png",
+      image: "/images/hero-banner.jpg",
       href: "/kircha",
     },
     {
       id: "slide-2",
       title: t.home.banner2Headline,
-      badge1Icon: <ShieldTick size={12} color="#74a156" variant="Bold" />,
+      badge1Icon: <Flash size={10} color="#74a156" variant="Bold" />,
       badge1Text: t.home.banner2Badge1,
-      badge2Icon: <Like1 size={12} color="#74a156" variant="Bold" />,
+      badge2Icon: <ShieldTick size={10} color="#74a156" variant="Bold" />,
       badge2Text: t.home.banner2Badge2,
-      image: "/images/borana_ox_detail.png",
+      image: "/images/figma_banner.png",
       href: "/kircha",
     },
     {
       id: "slide-3",
       title: t.home.banner3Headline,
-      badge1Icon: <TickCircle size={12} color="#74a156" variant="Bold" />,
+      badge1Icon: <Flash size={10} color="#74a156" variant="Bold" />,
       badge1Text: t.home.banner3Badge1,
-      badge2Icon: <PercentageCircle size={12} color="#74a156" variant="Bold" />,
+      badge2Icon: <ShieldTick size={10} color="#74a156" variant="Bold" />,
       badge2Text: t.home.banner3Badge2,
       image: "/images/fresh_milk_yogurt.png",
       href: "/shop",
     },
   ];
 
-  // Auto slide every 5 seconds
+  // Auto-slide carousel every 5 seconds
   useEffect(() => {
     bannerTimerRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerSlides.length);
@@ -101,6 +98,29 @@ export default function TMAHomePage() {
       if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
     };
   }, [bannerSlides.length]);
+
+  // Fetch live products from backend
+  useEffect(() => {
+    let isMounted = true;
+
+    getProducts({ page: 1, limit: 10, token: authToken })
+      .then((items) => {
+        if (isMounted) {
+          setLiveProducts(items);
+          setIsLoadingProducts(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching homepage products:", err);
+        if (isMounted) {
+          setIsLoadingProducts(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authToken]);
 
   const resetBannerTimer = () => {
     if (bannerTimerRef.current) clearInterval(bannerTimerRef.current);
@@ -134,7 +154,7 @@ export default function TMAHomePage() {
   const handleTouchEnd = () => {
     if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
       const diffX = touchStartXRef.current - touchEndXRef.current;
-      const swipeThreshold = 35;
+      const swipeThreshold = 30;
 
       if (diffX > swipeThreshold) {
         handleNextSlide();
@@ -146,7 +166,7 @@ export default function TMAHomePage() {
     touchEndXRef.current = null;
   };
 
-  // Mouse Drag Handlers for Testing
+  // Mouse Drag Handlers for Desktop Testing
   const handleMouseDown = (e: React.MouseEvent) => {
     touchStartXRef.current = e.clientX;
     touchEndXRef.current = e.clientX;
@@ -161,7 +181,7 @@ export default function TMAHomePage() {
   const handleMouseUp = () => {
     if (touchStartXRef.current !== null && touchEndXRef.current !== null) {
       const diffX = touchStartXRef.current - touchEndXRef.current;
-      const swipeThreshold = 35;
+      const swipeThreshold = 30;
 
       if (diffX > swipeThreshold) {
         handleNextSlide();
@@ -194,93 +214,65 @@ export default function TMAHomePage() {
     },
   ];
 
-  const shopProducts: ShopProductItem[] = [
-    {
-      id: "shp-1",
-      name: "1L Milk & Yogurt",
-      priceETB: 250,
-      image: "/images/fresh_milk_yogurt.png",
-      unit: "liter",
-      category: "dairy",
-    },
-    {
-      id: "shp-2",
-      name: "Farm Fresh Eggs",
-      priceETB: 24,
-      image: "/images/fresh_milk_yogurt.png",
-      unit: "piece",
-      category: "eggs",
-    },
-    {
-      id: "shp-3",
-      name: "Milk & Yogurt Kit",
-      priceETB: 250,
-      image: "/images/fresh_milk_yogurt.png",
-      unit: "package",
-      category: "dairy",
-    },
-  ];
-
   const totalCartCount = getCartCount();
 
-  const handleAddToCart = (e: React.MouseEvent, item: ShopProductItem) => {
+  const handleAddToCart = (e: React.MouseEvent, item: FrontendProduct) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({
-      id: item.id,
-      name: item.name,
-      priceETB: item.priceETB,
-      images: [item.image],
-      unit: item.unit,
-      category: item.category,
-      availableStock: 50,
-      isActive: true,
-      description: item.name,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+    addToCart(
+      {
+        id: item.id,
+        name: item.name,
+        priceETB: item.priceETB,
+        images: item.images,
+        unit: item.shopUnit,
+        category: item.shopCategory,
+        availableStock: item.availableStock,
+        isActive: item.isAvailable,
+        description: item.description,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      1,
+    );
+
+    setAddedProductId(item.id);
+    setTimeout(() => {
+      setAddedProductId(null);
+    }, 1200);
   };
 
   return (
     <div className="bg-[#f2f4f2] min-h-screen pb-[140px] flex flex-col items-center">
       {/* Floating & Sticky Top Header (61:2317) */}
       <header className="bg-white/95 backdrop-blur-md w-full h-[68px] flex items-center justify-between px-[16px] border-b border-[rgba(0,0,0,0.06)] sticky top-0 z-40 shadow-xs">
-        {/* User Identity on Left (61:2330) */}
+        {/* User Identity on Left */}
         <Link
           href="/profile"
-          className="flex items-center gap-[8px] cursor-pointer"
+          className="flex items-center gap-[10px] hover:opacity-85 transition-opacity"
         >
-          <div className="size-[34px] rounded-full overflow-hidden bg-stone-100 flex items-center justify-center shrink-0 border border-stone-200">
-            <Image
-              src="/images/user_avatar_header.svg"
-              alt="Profile"
-              width={34}
-              height={34}
-            />
+          <div className="bg-[#74a156] border-2 border-white shadow-2xs size-[40px] rounded-full flex items-center justify-center shrink-0">
+            <User size={20} color="#ffffff" variant="Bold" />
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] text-[#323b49] font-medium leading-[14px]">
+            <span className="text-[11px] font-medium text-[#868685] leading-[14px]">
               {t.home.greeting}
             </span>
-            <span className="text-[13px] text-[#323b49] font-semibold leading-[16px] truncate max-w-[140px]">
+            <span className="text-[14px] font-bold text-[#1a1c19] tracking-tight leading-[18px]">
               {displayName}
             </span>
           </div>
         </Link>
 
-        {/* Cart Bag on Right with Notification Count (61:2445) */}
+        {/* Shopping Cart Icon on Right */}
         <Link
           href="/shop/cart"
-          className="relative p-2 flex items-center justify-center active:scale-95 transition-transform"
+          className="relative size-[40px] rounded-full bg-[#f2f4f2] hover:bg-[#e6e8e6] flex items-center justify-center transition-all"
+          aria-label="Shopping Cart"
         >
-          <Image
-            src="/images/bag_happy.svg"
-            alt="Cart"
-            width={26}
-            height={26}
-          />
+          <BagHappy size={22} color="#1a1c19" variant="Linear" />
           {totalCartCount > 0 && (
-            <span className="absolute top-1 right-0 bg-[#74a156] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-xs">
+            <span className="absolute -top-1 -right-1 bg-[#74a156] text-white text-[10px] font-bold rounded-full size-[18px] flex items-center justify-center shadow-xs">
               {totalCartCount}
             </span>
           )}
@@ -332,7 +324,7 @@ export default function TMAHomePage() {
         <section className="w-full flex flex-col items-center py-[12px]">
           {/* Swipable Carousel Box */}
           <div
-            className="h-[126px] w-full overflow-hidden relative rounded-[12px] shrink-0 shadow-xs cursor-pointer select-none touch-pan-y"
+            className="h-[126px] w-full overflow-hidden relative rounded-[12px] shrink-0 shadow-xs cursor-grab active:cursor-grabbing select-none touch-pan-y"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -349,18 +341,14 @@ export default function TMAHomePage() {
                 <div
                   key={slide.id}
                   className="relative h-full w-full shrink-0 overflow-hidden"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(90deg, rgba(116, 161, 86, 0.75) 0%, rgba(116, 161, 86, 0.6) 100%)",
-                  }}
                 >
-                  {/* Background Photo with soft dark/green overlay */}
+                  {/* Background Photo with soft overlay */}
                   <div className="absolute inset-0">
                     <Image
                       src={slide.image}
                       alt={slide.title}
                       fill
-                      className="object-cover -scale-y-100 rotate-180 brightness-95"
+                      className="object-cover brightness-95"
                       priority={idx === 0}
                       draggable={false}
                     />
@@ -368,65 +356,65 @@ export default function TMAHomePage() {
                       className="absolute inset-0"
                       style={{
                         background:
-                          "linear-gradient(90deg, rgba(116, 161, 86, 0.7) 0%, rgba(116, 161, 86, 0.4) 100%)",
+                          "linear-gradient(90deg, rgba(116, 161, 86, 0.8) 0%, rgba(116, 161, 86, 0.45) 100%)",
                       }}
                     />
                   </div>
 
                   {/* Headline Text */}
-                  <p className="absolute left-[20.5px] top-[40px] text-[18px] font-semibold text-white leading-normal drop-shadow-sm whitespace-nowrap">
+                  <p className="absolute left-[20px] top-[36px] text-[17px] font-bold text-white leading-tight drop-shadow-sm whitespace-nowrap">
                     {slide.title}
                   </p>
 
-                  {/* Pill Badge 1 */}
-                  <div className="absolute left-[20.5px] top-[85px] flex items-center gap-[4px] bg-black/25 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
-                    <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
-                      {slide.badge1Icon}
+                  {/* Badges Row */}
+                  <div className="absolute left-[20px] top-[80px] flex items-center gap-[6px]">
+                    <div className="flex items-center gap-[4px] bg-black/30 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
+                      <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
+                        {slide.badge1Icon}
+                      </div>
+                      <span className="text-[9.5px] font-semibold text-white tracking-tight whitespace-nowrap">
+                        {slide.badge1Text}
+                      </span>
                     </div>
-                    <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
-                      {slide.badge1Text}
-                    </span>
-                  </div>
 
-                  {/* Pill Badge 2 */}
-                  <div className="absolute left-[132px] top-[85px] flex items-center gap-[4px] bg-black/25 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
-                    <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
-                      {slide.badge2Icon}
+                    <div className="flex items-center gap-[4px] bg-black/30 backdrop-blur-xs px-[8px] py-[2px] rounded-full border border-white/20">
+                      <div className="bg-white size-[16px] rounded-full flex items-center justify-center shrink-0">
+                        {slide.badge2Icon}
+                      </div>
+                      <span className="text-[9.5px] font-semibold text-white tracking-tight whitespace-nowrap">
+                        {slide.badge2Text}
+                      </span>
                     </div>
-                    <span className="text-[9.5px] font-semibold text-white tracking-[-0.37px] whitespace-nowrap">
-                      {slide.badge2Text}
-                    </span>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Interactive Carousel Dots Indicator (44:611) */}
-          <div className="pt-[8px] flex items-center justify-center gap-1.5">
-            {bannerSlides.map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                type="button"
-                onClick={() => {
-                  setCurrentSlide(dotIdx);
-                  resetBannerTimer();
-                }}
-                className={cn(
-                  "rounded-full transition-all duration-300 cursor-pointer",
-                  dotIdx === currentSlide
-                    ? "bg-[#74a156] w-5 h-1.5 shadow-xs"
-                    : "bg-stone-300 w-1.5 h-1.5 hover:bg-stone-400",
-                )}
-                aria-label={`Go to slide ${dotIdx + 1}`}
-              />
-            ))}
+            {/* Indicator Dots */}
+            <div className="absolute bottom-[8px] right-[12px] flex items-center gap-[4px] z-10 bg-black/30 backdrop-blur-xs px-2 py-1 rounded-full">
+              {bannerSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSlide(idx);
+                    resetBannerTimer();
+                  }}
+                  className={`rounded-full transition-all cursor-pointer ${
+                    currentSlide === idx
+                      ? "w-[14px] h-[5px] bg-white"
+                      : "size-[5px] bg-white/50"
+                  }`}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* 3. Section: Other Products (19:146) */}
+        {/* 3. Section: Other Products (52:1945) */}
         <section className="w-full flex flex-col gap-[8px] py-[6px]">
-          <div className="flex items-center justify-between px-[4px] w-full">
+          <div className="flex items-center justify-between px-[4px]">
             <h2 className="text-[15px] font-bold text-black leading-[1.4]">
               {t.home.otherProductsTitle}
             </h2>
@@ -438,47 +426,79 @@ export default function TMAHomePage() {
             </Link>
           </div>
 
-          {/* 3 Shop Product Cards (19:149) */}
-          <div className="flex gap-[10px] items-center justify-between w-full">
-            {shopProducts.map((product) => (
-              <div
-                key={product.id}
-                className="bg-white border border-[#e2e3dd] rounded-[8px] overflow-hidden flex-1 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.02)] flex flex-col"
-              >
-                {/* Product Image Area (44:812) */}
-                <div className="bg-[#e2e3dd] h-[78px] w-full relative flex items-center justify-center overflow-hidden">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover mix-blend-multiply"
-                  />
-                </div>
+          {/* Product Items List */}
+          {isLoadingProducts ? (
+            <div className="w-full py-6 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-[#74a156] border-t-transparent" />
+            </div>
+          ) : liveProducts.length === 0 ? (
+            <div className="bg-white rounded-[12px] p-6 text-center w-full border border-stone-200">
+              <p className="text-xs text-stone-500">
+                {language === "am"
+                  ? "ምንም ምርቶች አልተገኙም"
+                  : "No products available right now"}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-[10px] w-full">
+              {liveProducts.slice(0, 3).map((item) => {
+                const isJustAdded = addedProductId === item.id;
 
-                {/* Card Body (44:814) */}
-                <div className="p-[8px] flex flex-col gap-[4px]">
-                  <span className="text-[12px] font-semibold text-[#1a1c19] leading-[16px] truncate">
-                    {product.name}
-                  </span>
+                return (
+                  <Link
+                    key={item.id}
+                    href="/shop"
+                    className="bg-white border border-[#e2e3dd] rounded-[12px] p-[10px] flex items-center justify-between shadow-2xs hover:border-[#74a156]/50 transition-all group"
+                  >
+                    <div className="flex items-center gap-[12px] min-w-0 flex-1">
+                      <div className="relative size-[56px] rounded-[8px] overflow-hidden bg-[#e2e3dd] shrink-0">
+                        <Image
+                          src={
+                            item.images[0] || "/images/fresh_milk_yogurt.png"
+                          }
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-[13px] font-bold text-[#163422] leading-[20px]">
-                      {product.priceETB} {t.common.etb}
-                    </span>
+                      <div className="flex flex-col min-w-0 flex-1 pr-2">
+                        <h4 className="font-bold text-[13px] text-[#1a1c19] truncate group-hover:text-[#74a156] transition-colors">
+                          {item.name}
+                        </h4>
+                        <span className="text-[11px] text-[#868685] truncate">
+                          {item.description}
+                        </span>
+                        <span className="font-extrabold text-[13px] text-[#163422] pt-0.5">
+                          {formatETB(item.priceETB)}
+                          <span className="text-[10px] font-normal text-[#868685] ml-1">
+                            / {item.unit}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
 
-                    {/* Add Button (44:820) */}
                     <button
-                      onClick={(e) => handleAddToCart(e, product)}
-                      className="bg-[#74a156] hover:bg-[#669049] active:scale-90 transition-all rounded-full size-[24px] flex items-center justify-center shrink-0 shadow-2xs cursor-pointer"
-                      aria-label={`Add ${product.name} to cart`}
+                      type="button"
+                      onClick={(e) => handleAddToCart(e, item)}
+                      className={`size-[32px] rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-xs active:scale-90 ${
+                        isJustAdded
+                          ? "bg-emerald-600 text-white"
+                          : "bg-[#74a156] hover:bg-[#669049] text-white"
+                      }`}
+                      aria-label={`Add ${item.name} to cart`}
                     >
-                      <Add size={14} color="#ffffff" />
+                      {isJustAdded ? (
+                        <TickCircle size={16} color="#ffffff" variant="Bold" />
+                      ) : (
+                        <Add size={16} color="#ffffff" />
+                      )}
                     </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </section>
       </main>
     </div>

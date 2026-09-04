@@ -37,11 +37,17 @@ interface AppState {
   addReservation: (reservation: KirchaReservation) => void;
   getOrdersCount: () => number;
 
-  // User State
+  // User & Auth State
+  isAuthenticated: boolean;
+  authToken: string | null;
+  telegramInitData: string | null;
   userName: string;
   userPhone: string;
   setUserName: (name: string) => void;
   setUserPhone: (phone: string) => void;
+  setTelegramInitData: (initData: string) => void;
+  setAuth: (token: string, user: { name?: string; phone: string }) => void;
+  logout: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -163,10 +169,28 @@ export const useAppStore = create<AppState>()(
         return get().reservations.length + 1; // sample shop order + kircha
       },
 
+      // User & Auth State
+      isAuthenticated: false,
+      authToken: null,
+      telegramInitData: null,
       userName: "Mathias A.",
       userPhone: "+251 91 234 5678",
       setUserName: (name) => set({ userName: name }),
       setUserPhone: (phone) => set({ userPhone: phone }),
+      setTelegramInitData: (initData) => set({ telegramInitData: initData }),
+      setAuth: (token, user) =>
+        set({
+          isAuthenticated: true,
+          authToken: token,
+          userName: user.name || get().userName,
+          userPhone: user.phone || get().userPhone,
+        }),
+      logout: () =>
+        set({
+          isAuthenticated: false,
+          authToken: null,
+          telegramInitData: null,
+        }),
     }),
     {
       name: "fondi-farms-storage",
